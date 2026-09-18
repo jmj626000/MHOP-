@@ -27,6 +27,7 @@ env/
 # ===== Node / 前端构建 =====
 node_modules/
 frontend/dist/
+frontend/.vite/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

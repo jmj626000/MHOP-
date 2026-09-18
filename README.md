@@ -4,7 +4,7 @@
 >
 > 技术栈 **FastAPI + Vue 3 + Element Plus + SQLite/MySQL**，AI 默认接入讯飞星火（OpenAI 兼容协议），全链路支持 HTTPS。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](./LICENSE)
 
 ---
 
@@ -34,7 +34,7 @@
 - 危机词/敏感词双重识别；AI 输出危机热线双保险
 - 内容先 HTML 转义再渲染，Markdown 链接仅允许 http/https，防 XSS
 - Schema 幂等迁移（SQLite/MySQL 通用，老库自动补列）
-- 密钥仅从 `.env` 读取，不入库不入代码；MIT 开源协议
+- 密钥仅从 `.env` 读取，不入库不入代码；以 CC BY-NC-SA 4.0 协议开源
 
 ---
 
@@ -188,4 +188,14 @@ AI 适配逻辑见 [backend/app/ai.py](./backend/app/ai.py)：危机信号强制
 
 ## 开源协议
 
-[MIT License](./LICENSE) © 2026 MHOP 公益心理辅助平台 contributors
+本项目采用 **知识共享 署名-非商业性使用-相同方式共享 4.0 国际许可协议**（[CC BY-NC-SA 4.0](./LICENSE)）© 2026 MHOP 公益心理辅助平台 contributors。
+
+你可以在 **署名** 原作者的前提下自由共享与改编，但必须遵守：
+
+- **BY（署名）**：使用、转载或二次开发时须保留版权声明、协议链接并注明修改之处
+- **NC（非商业性使用）**：不得将本作品用于商业目的
+- **SA（相同方式共享）**：基于本项目的衍生作品须以相同协议（CC BY-NC-SA 4.0）发布
+
+完整法律文本见 [LICENSE](./LICENSE)；人类可读的协议摘要见 https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
+
+> 提示：CC 协议主要面向内容类作品；若你需要商业使用授权（例如商用部署、SaaS 运营），请联系版权持有者另行取得书面许可。

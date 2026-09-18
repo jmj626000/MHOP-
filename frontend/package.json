@@ -2,7 +2,7 @@
   "name": "mhop-frontend",
   "private": true,
   "version": "1.0.0",
-  "license": "MIT",
+  "license": "CC-BY-NC-SA-4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

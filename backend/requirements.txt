@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.36
+pydantic>=2.9
+pydantic-settings>=2.5
+pyjwt>=2.9
+httpx>=0.27
+
+# 本地 HTTPS 自签证书生成（仅开发需要；生产请使用受信任 CA 证书）
+cryptography>=43.0

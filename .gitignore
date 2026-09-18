@@ -1,0 +1,39 @@
+# ===== 密钥与环境配置（禁止提交） =====
+.env
+backend/.env
+frontend/.env
+frontend/.env.*
+
+# ===== 本地 HTTPS 自签证书 =====
+certs/
+*.pem
+*.key
+*.pfx
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ===== SQLite 数据库与日志 =====
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# ===== Node / 前端构建 =====
+node_modules/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== 编辑器 / 系统 =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

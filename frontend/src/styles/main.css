@@ -1,0 +1,366 @@
+:root {
+  --mhop-bg: #f5f3ee;
+  --mhop-card: #ffffff;
+  --mhop-teal: #2f8f83;
+  --mhop-teal-dark: #227067;
+  --mhop-teal-light: #e7f3f1;
+  --mhop-sand: #faf7f1;
+  --mhop-text: #263a37;
+  --mhop-text-sub: #6b7f7b;
+  --mhop-danger: #d83a2e;
+  --mhop-danger-2: #f4713f;
+
+  --el-color-primary: #2f8f83;
+  --el-color-primary-light-3: #5eaaa1;
+  --el-color-primary-light-5: #8fc4be;
+  --el-color-primary-light-7: #bfdedb;
+  --el-color-primary-light-8: #d4eae8;
+  --el-color-primary-light-9: #e7f3f1;
+  --el-color-primary-dark-2: #227067;
+  --el-border-radius-base: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--mhop-bg);
+  color: var(--mhop-text);
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mhop-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.mhop-card {
+  background: var(--mhop-card);
+  border-radius: 16px;
+  box-shadow: 0 2px 14px rgba(38, 58, 55, 0.06);
+}
+
+.text-sub {
+  color: var(--mhop-text-sub);
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.85;
+}
+
+/* ---------- 紧急援助横幅 ---------- */
+.emergency-banner {
+  background: linear-gradient(100deg, #d83a2e 0%, #e8502f 45%, #f4713f 100%);
+  color: #fff;
+}
+
+.emergency-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.emergency-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  flex: none;
+  animation: pulse 1.4s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.emergency-title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.emergency-main-phone {
+  font-weight: 800;
+  font-size: 17px;
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+}
+
+.emergency-toggle {
+  margin-left: auto;
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+.emergency-detail {
+  padding: 4px 20px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.hotline-card {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.hotline-card:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.hotline-card .phone {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin: 4px 0;
+}
+
+.hotline-card .tag {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.hotline-card .desc {
+  font-size: 12.5px;
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+/* ---------- AI 回复卡片 ---------- */
+.ai-reply-card {
+  background: linear-gradient(180deg, #f0f8f7 0%, #ffffff 100%);
+  border: 1px solid #bfe0db;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--mhop-teal);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.crisis-tag {
+  background: #fdecea;
+  color: var(--mhop-danger);
+  border: 1px solid #f5c6c1;
+}
+
+.page-fade {
+  animation: fadeIn 0.25s ease;
+}
+
+/* ---------- Markdown 正文排版 ---------- */
+.md-body {
+  line-height: 1.85;
+  word-break: break-word;
+  font-size: 14.5px;
+  color: var(--mhop-text);
+}
+.md-body .md-p {
+  margin: 0 0 10px;
+}
+.md-body h3.md-h,
+.md-body h4.md-h,
+.md-body h5.md-h,
+.md-body h6.md-h {
+  margin: 16px 0 8px;
+  line-height: 1.5;
+}
+.md-body h3.md-h {
+  font-size: 17px;
+}
+.md-body h4.md-h {
+  font-size: 16px;
+}
+.md-body h5.md-h,
+.md-body h6.md-h {
+  font-size: 15px;
+}
+.md-body .md-ul,
+.md-body .md-ol {
+  margin: 6px 0 12px;
+  padding-left: 22px;
+}
+.md-body .md-ul li,
+.md-body .md-ol li {
+  margin: 4px 0;
+}
+.md-body .md-quote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--mhop-teal);
+  background: var(--mhop-teal-light);
+  border-radius: 0 8px 8px 0;
+  color: #35554f;
+}
+.md-body .md-hr {
+  border: none;
+  border-top: 1px solid #e3e8e6;
+  margin: 14px 0;
+}
+.md-body .md-code {
+  background: #eef1ef;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: Consolas, 'Courier New', monospace;
+  color: #b05a44;
+}
+.md-body .md-pre {
+  background: #2b3432;
+  color: #e6eeec;
+  padding: 12px 14px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 10px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.md-body .md-pre code {
+  font-family: Consolas, 'Courier New', monospace;
+}
+.md-body a {
+  color: var(--mhop-teal-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- 论坛三栏布局 ---------- */
+.forum-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.forum-side {
+  position: sticky;
+  top: 12px;
+}
+.side-card {
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.side-card h4 {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+.stat-grid strong {
+  display: block;
+  font-size: 19px;
+  color: var(--mhop-teal-dark);
+}
+.stat-grid span {
+  font-size: 12px;
+  color: var(--mhop-text-sub);
+}
+.side-online {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+}
+.new-topic-btn {
+  width: 100%;
+  margin-bottom: 14px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+.board-nav {
+  padding: 8px 0;
+}
+.board-nav a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+.board-nav a:hover {
+  background: #f4f8f7;
+}
+.board-nav a.active {
+  background: var(--mhop-teal-light);
+  color: var(--mhop-teal-dark);
+  font-weight: 600;
+  border-left-color: var(--mhop-teal);
+}
+.board-nav .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.board-nav .cnt {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--mhop-text-sub);
+}
+@media (max-width: 860px) {
+  .forum-layout {
+    grid-template-columns: 1fr;
+  }
+  .forum-side {
+    position: static;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

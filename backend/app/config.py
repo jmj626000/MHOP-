@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # 北京乐科心理干预研究院专属援助电话（由运营方提供后配置）
     LEKE_HOTLINE: str = ""
 
+    # 前端构建产物目录（存在时由后端一并托管，Docker 生产部署使用；本地开发留空目录即可）
+    STATIC_DIR: str = "static"
+
 
 settings = Settings()
 

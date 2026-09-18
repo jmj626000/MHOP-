@@ -1,0 +1,37 @@
+# MHOP 服务器部署编排
+# 使用方式见 README「服务器部署（Docker 一键）」。
+# 后端不直接暴露公网端口，只由 Caddy 反代；Caddy 自动申请并续期 Let's Encrypt 证书。
+
+services:
+  backend:
+    build: .
+    image: mhop:latest
+    restart: unless-stopped
+    env_file:
+      - path: ./backend/.env
+        required: false # 首次未创建也能启动（AI 走本地兜底）；生产建议按文档配置
+    environment:
+      # SQLite 数据落到宿主机 ./data，容器重建不丢数据；
+      # 如改用 MySQL，在 backend/.env 设置 DATABASE_URL 即可，本行可删。
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/mhop.db}
+    volumes:
+      - ./data:/app/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

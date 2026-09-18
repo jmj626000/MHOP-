@@ -1,0 +1,6 @@
+# Caddy 配置：DOMAIN 在仓库根目录 .env 中设置（docker compose 自动读取）。
+# 未设置时以 localhost 启动（仅用于本机测试）。
+{$DOMAIN:localhost} {
+	encode gzip zstd
+	reverse_proxy backend:8000
+}

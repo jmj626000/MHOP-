@@ -1,10 +1,16 @@
+<div align="center">
+
 # MHOP 公益心理辅助平台
 
-> 一站式心理帮扶网站：匿名倾诉论坛、AI 即时陪伴、心理量表评估、危机干预热线与后台人工巡检。
->
-> 技术栈 **FastAPI + Vue 3 + Element Plus + SQLite/MySQL**，AI 默认接入讯飞星火（OpenAI 兼容协议），全链路支持 HTTPS。
+**一站式心理帮扶网站：匿名倾诉论坛 · AI 即时陪伴 · 心理量表评估 · 危机干预热线 · 后台人工巡检**
 
+FastAPI + Vue 3 + Element Plus + SQLite/MySQL，AI 默认接入讯飞星火（OpenAI 兼容协议，HTTPS）
+
+[![CI](https://github.com/jmj626000/MHOP-/actions/workflows/ci.yml/badge.svg)](https://github.com/jmj626000/MHOP-/actions/workflows/ci.yml)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](./LICENSE)
+[![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-2496ED?logo=docker&logoColor=white)](#服务器部署docker-一键)
+
+</div>
 
 ---
 
@@ -62,7 +68,11 @@ MHOP/
 │   └── requirements.txt
 ├── frontend/               Vue 3 + Vite + Element Plus + Pinia
 │   └── src/{views,components,layouts,router,stores,utils,styles}
-└── scripts/gen_cert.py     本地开发 TLS 自签证书生成
+├── scripts/gen_cert.py     本地开发 TLS 自签证书生成
+├── deploy/                 服务器部署配置（Caddyfile 等）
+├── .github/workflows/      CI：前端构建 / 后端检查 / Docker 镜像构建
+├── Dockerfile              多阶段构建（前端打包 + 后端单镜像托管）
+└── docker-compose.yml      服务器一键编排（backend + Caddy 自动 HTTPS）
 ```
 
 | 层 | 技术 |
@@ -144,23 +154,66 @@ Windows 下若浏览器提示证书不受信任，可把 `backend/certs/cert.pem
 
 ---
 
-## 生产部署（域名 + HTTPS）
+## 服务器部署（Docker 一键）
 
-1. 准备一台服务器与域名，构建前端静态文件：`cd frontend && npm run build`（产物 `dist/`，可用 Nginx/Caddy 托管）
-2. 后端建议用进程管理启动，仅监听本地：
-   ```bash
-   uvicorn app.main:app --host 127.0.0.1 --port 8000
-   ```
-3. 用 **Caddy**（自动申请并续期 Let's Encrypt 免费证书）反代，示例 `Caddyfile`：
-   ```
-   your-domain.com {
-       root * /var/www/mhop/dist
-       try_files {path} /index.html
-       reverse_proxy /api/* 127.0.0.1:8000
-   }
-   ```
-   或用 Nginx + certbot 配置证书后反向代理 `/api/` 到 8000。
-4. 生产环境务必：修改 `JWT_SECRET`、更换管理员密码、将 `.env` 权限收紧、数据库改用 MySQL 并定期备份。
+面向 Linux 服务器（Ubuntu/Debian/CentOS 均可），一条命令同时起前端、后端与 HTTPS。
+镜像为多阶段构建：容器内编译前端 → 后端单镜像同时提供 API 与前端页面；**Caddy** 自动申请并续期 Let's Encrypt 证书，无需手动配证书。
+
+### 1. 服务器准备
+
+```bash
+# Ubuntu / Debian
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable --now docker
+
+# 拉取代码
+git clone https://github.com/jmj626000/MHOP-.git mhop && cd mhop
+```
+
+并将你的域名 A 记录解析到本服务器 IP，放行防火墙 **80 / 443** 端口。
+
+### 2. 配置（两个文件）
+
+```bash
+# 应用配置（大模型密钥、JWT 等）
+cp backend/.env.example backend/.env
+vim backend/.env
+
+# 部署变量（域名；如用外部 MySQL 也写在这里）
+cp deploy/env.example .env
+vim .env
+```
+
+根目录 `.env` 最少只需要一行：
+
+```ini
+DOMAIN=你的域名（例如 mhop.example.org）
+```
+
+SQLite 数据库自动放在宿主机 `./data/mhop.db`，容器重建不丢数据。
+
+### 3. 启动 / 更新 / 查看日志
+
+```bash
+sudo docker compose up -d --build      # 首次启动（自动签证书，约 2-5 分钟构建）
+sudo docker compose ps                 # 查看状态（healthy 即正常）
+sudo docker compose logs -f backend    # 查看后端日志
+
+# 更新到最新代码：
+git pull && sudo docker compose up -d --build
+```
+
+打开 `https://你的域名` 即可。后台入口 `https://你的域名/admin`，初始管理员 **admin / admin123**（登录后立即修改）。
+
+### 4. 生产安全清单
+
+- [ ] 修改 `backend/.env` 中的 `JWT_SECRET` 为随机长字符串
+- [ ] 登录后台修改 admin 初始密码
+- [ ] 定期备份 `./data/`（SQLite）或用 MySQL 定时备份
+- [ ] 大模型密钥仅写在 `backend/.env`（已被 `.gitignore` 排除，不会进仓库/镜像）
+- [ ] 用户量增大后切换 MySQL：在根目录 `.env` 设置 `DATABASE_URL=mysql+pymysql://...`（首次启动会自动建表迁移）
+
+> 不用 Docker 的传统方式：前端 `npm run build` 后把 `dist/` 交给 Nginx/Caddy 托管并反代 `/api` 到 `uvicorn --host 127.0.0.1`；后端在设置 `STATIC_DIR` 指向 dist 时也可直接单进程托管整站。
 
 ---
 

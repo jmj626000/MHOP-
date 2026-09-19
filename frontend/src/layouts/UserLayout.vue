@@ -15,12 +15,12 @@
           <router-link to="/assessment">AI 心理评估</router-link>
         </nav>
         <div class="nav-right">
-          <el-tag type="success" effect="light" round>
+          <el-tag type="success" effect="light" round class="online-tag">
             <el-icon style="vertical-align: -2px"><Connection /></el-icon>
             {{ online.count }} 人在线
           </el-tag>
           <template v-if="auth.isLoggedIn">
-            <el-dropdown @command="onCommand">
+            <el-dropdown @command="onCommand" class="user-dropdown">
               <span class="user-trigger">
                 <el-icon><UserFilled /></el-icon>
                 {{ auth.displayName }}
@@ -39,12 +39,48 @@
             </el-dropdown>
           </template>
           <template v-else>
-            <router-link to="/login"><el-button text>登录</el-button></router-link>
-            <router-link to="/register"><el-button type="primary" round>注册</el-button></router-link>
+            <router-link to="/login" class="login-link"><el-button text>登录</el-button></router-link>
+            <router-link to="/register" class="register-link"><el-button type="primary" round>注册</el-button></router-link>
           </template>
+          <span class="nav-burger" @click="drawer = true" role="button" aria-label="打开菜单">
+            <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round">
+              <line x1="3.5" y1="6.5" x2="20.5" y2="6.5" />
+              <line x1="3.5" y1="12" x2="20.5" y2="12" />
+              <line x1="3.5" y1="17.5" x2="20.5" y2="17.5" />
+            </svg>
+          </span>
         </div>
       </div>
     </header>
+
+    <!-- 移动端抽屉菜单 -->
+    <el-drawer v-model="drawer" title="菜单" direction="rtl" size="72%" class="nav-drawer">
+      <div class="drawer-online">
+        <el-icon style="color: #4e9e5f"><Connection /></el-icon>
+        {{ online.count }} 人在线
+      </div>
+      <nav class="drawer-links" @click="drawer = false">
+        <router-link to="/"><el-icon><HomeFilled /></el-icon> 首页</router-link>
+        <router-link to="/forum"><el-icon><ChatLineSquare /></el-icon> 互助论坛</router-link>
+        <router-link to="/assessment"><el-icon><DataAnalysis /></el-icon> AI 心理评估</router-link>
+      </nav>
+      <div class="drawer-actions">
+        <template v-if="auth.isLoggedIn">
+          <el-button v-if="auth.isAdmin" round @click="go('/admin/dashboard')">
+            <el-icon><Setting /></el-icon> 管理后台
+          </el-button>
+          <el-button type="danger" plain round @click="logoutMobile">
+            <el-icon><SwitchButton /></el-icon> 退出登录
+          </el-button>
+          <p class="drawer-user">当前账号：{{ auth.displayName }}</p>
+        </template>
+        <template v-else>
+          <el-button type="primary" round style="width: 100%" @click="go('/login')">登 录</el-button>
+          <el-button round style="width: 100%" @click="go('/register')">注 册</el-button>
+        </template>
+      </div>
+    </el-drawer>
 
     <EmergencyBanner />
 
@@ -70,6 +106,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import EmergencyBanner from '../components/EmergencyBanner.vue'
@@ -79,6 +116,18 @@ import { useOnlineStore } from '../stores/online'
 const router = useRouter()
 const auth = useAuthStore()
 const online = useOnlineStore()
+const drawer = ref(false)
+
+function go(path) {
+  drawer.value = false
+  router.push(path)
+}
+
+function logoutMobile() {
+  drawer.value = false
+  auth.logout()
+  router.push('/')
+}
 
 function onCommand(cmd) {
   if (cmd === 'admin') router.push('/admin/dashboard')
@@ -180,5 +229,92 @@ function onCommand(cmd) {
 .page-fade-enter-from,
 .page-fade-leave-to {
   opacity: 0;
+}
+
+/* 汉堡按钮：桌面端隐藏 */
+.nav-burger {
+  display: none;
+  color: var(--mhop-text);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+}
+.nav-burger svg {
+  display: block;
+}
+
+/* 抽屉菜单 */
+.drawer-online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--mhop-text-sub);
+  padding: 0 4px 14px;
+  border-bottom: 1px solid #eee9df;
+}
+.drawer-links {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+}
+.drawer-links a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 8px;
+  font-size: 16px;
+  color: var(--mhop-text);
+  border-radius: 10px;
+}
+.drawer-links a:active,
+.drawer-links a.router-link-exact-active {
+  background: var(--mhop-teal-light);
+  color: var(--mhop-teal-dark);
+  font-weight: 600;
+}
+.drawer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.drawer-user {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--mhop-text-sub);
+  margin: 4px 0 0;
+}
+
+@media (max-width: 760px) {
+  .nav-inner {
+    height: 56px;
+    gap: 12px;
+  }
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+  .brand strong {
+    font-size: 15.5px;
+  }
+  .brand small {
+    display: none;
+  }
+  .nav-links,
+  .online-tag,
+  .user-dropdown,
+  .login-link,
+  .register-link {
+    display: none;
+  }
+  .nav-burger {
+    display: inline-block;
+  }
+  main.mhop-container {
+    padding-top: 14px !important;
+    padding-bottom: 28px !important;
+  }
 }
 </style>

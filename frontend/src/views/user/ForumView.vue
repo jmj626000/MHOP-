@@ -44,7 +44,7 @@
           v-model="keyword"
           placeholder="搜索帖子内容"
           clearable
-          style="width: 240px"
+          class="search-input"
           :prefix-icon="Search"
           @keyup.enter="reload(1)"
           @clear="reload(1)"
@@ -88,6 +88,11 @@
         </el-button>
       </div>
     </main>
+
+    <!-- 移动端浮动发帖按钮 -->
+    <button class="mobile-fab" @click="openComposer" aria-label="发布主题">
+      <el-icon><EditPen /></el-icon>
+    </button>
 
     <!-- 发帖弹窗 -->
     <el-dialog v-model="composerVisible" title="发布主题" width="640px" @closed="resetForm">
@@ -438,5 +443,115 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* 搜索框桌面固定宽度（移动端见媒体查询） */
+.search-input {
+  width: 240px;
+}
+
+/* 移动端浮动发帖按钮：默认隐藏 */
+.mobile-fab {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  /* 帖子流排到侧栏之前 */
+  .forum-main {
+    order: -1;
+  }
+  .stream-head {
+    gap: 8px;
+  }
+  .stream-title h2 {
+    font-size: 18px;
+  }
+  .search-input {
+    width: 100%;
+  }
+  .topic-list {
+    padding: 2px 2px;
+  }
+  .topic-row {
+    padding: 14px 10px;
+    gap: 9px;
+  }
+  .t-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+  .t-stats {
+    min-width: 52px;
+    gap: 5px;
+  }
+  .t-stats .stat,
+  .like-btn {
+    font-size: 12px;
+  }
+  .t-excerpt {
+    -webkit-line-clamp: 1;
+  }
+
+  /* 侧栏：统计卡与板块导航横排紧凑展示 */
+  .side-card {
+    padding: 12px 14px;
+  }
+  .new-topic-btn {
+    display: none;
+  }
+  .board-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 6px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .board-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .board-nav a {
+    flex: none;
+    border-left: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .board-nav a.active {
+    border-left-color: transparent;
+  }
+  .board-nav .cnt {
+    margin-left: 4px;
+  }
+
+  /* FAB */
+  .mobile-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2f8f83, #5eaaa1);
+    color: #fff;
+    font-size: 24px;
+    box-shadow: 0 6px 18px rgba(34, 112, 103, 0.42);
+    z-index: 90;
+    cursor: pointer;
+  }
+  .mobile-fab:active {
+    transform: scale(0.94);
+  }
+
+  .composer-foot {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }
 </style>

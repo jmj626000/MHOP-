@@ -273,6 +273,7 @@ a {
 .forum-side {
   position: sticky;
   top: 12px;
+  min-width: 0;
 }
 .side-card {
   padding: 16px 18px;
@@ -347,11 +348,67 @@ a {
 }
 @media (max-width: 860px) {
   .forum-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .forum-side {
     position: static;
+    min-width: 0;
   }
+}
+
+/* ---------- 全局移动端适配 ---------- */
+@media (max-width: 640px) {
+  .mhop-container {
+    padding: 0 12px;
+  }
+
+  /* 固定像素宽度的弹窗在手机上自适应 */
+  .el-dialog {
+    width: 92% !important;
+    margin: 6vh auto !important;
+  }
+  .el-dialog__body {
+    padding: 16px 18px;
+  }
+  .el-message-box {
+    width: 86% !important;
+    max-width: 360px;
+  }
+  /* 全局消息提示不要贴边 */
+  .el-message {
+    max-width: calc(100vw - 32px);
+  }
+
+  /* 紧急援助横幅：小屏纵向排列，号码可一键拨打 */
+  .emergency-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .emergency-title {
+    font-size: 14px;
+  }
+  .emergency-toggle {
+    margin-left: 0;
+    width: 100%;
+  }
+  .emergency-detail {
+    padding: 4px 12px 14px;
+    grid-template-columns: 1fr;
+  }
+
+  /* 卡片/字体基础收紧 */
+  .mhop-card {
+    border-radius: 12px;
+  }
+  .md-body {
+    font-size: 14px;
+  }
+}
+
+/* 后台表格在窄屏横向滚动，避免挤压变形 */
+.el-table {
+  width: 100% !important;
 }
 
 @keyframes fadeIn {

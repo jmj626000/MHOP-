@@ -14,15 +14,26 @@ class LoginIn(BaseModel):
     password: str
 
 
+class EmailCodeIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+
+
+class EmailLoginIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    code: str = Field(min_length=4, max_length=8)
+
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    new_account: bool = False  # 邮箱验证码首次登录自动注册时为 True
     user: "UserOut"
 
 
 class UserOut(BaseModel):
     id: int
     username: str
+    email: str | None = None
     role: str
     status: str
     created_at: datetime

@@ -558,10 +558,56 @@ onBeforeUnmount(stopPolling)
 }
 @media (max-width: 860px) {
   .detail-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .detail-rail {
     position: static;
+    min-width: 0;
+  }
+}
+@media (max-width: 640px) {
+  .board-hero {
+    padding: 18px 16px 16px;
+    border-radius: 12px 12px 4px 4px;
+  }
+  .board-hero h1 {
+    font-size: 18px;
+  }
+  .floor,
+  .ai-floor {
+    padding: 14px 13px;
+    gap: 10px;
+  }
+  .floor-side {
+    width: 40px;
+  }
+  .f-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .floor-time {
+    margin-left: 0;
+  }
+  .reply-composer {
+    padding: 16px 14px;
+  }
+  .composer-foot {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .rail-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .rail-floors {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .rail-floors p {
+    margin: 0;
   }
 }
 </style>

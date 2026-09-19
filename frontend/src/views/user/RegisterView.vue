@@ -92,4 +92,12 @@ async function submit() {
   color: var(--mhop-teal);
   font-weight: 600;
 }
+@media (max-width: 640px) {
+  .auth-wrap {
+    margin: 20px auto;
+  }
+  .auth-card {
+    padding: 26px 20px 22px;
+  }
+}
 </style>

@@ -60,7 +60,7 @@
             </el-tag>
             <el-tag v-if="p.crisis" size="small" type="danger" effect="light">危机关注</el-tag>
             <el-tag v-if="p.ai_replied" size="small" type="success" effect="light">AI 已回应</el-tag>
-            <span class="text-sub" style="margin-left: auto; font-size: 12.5px">{{ fromNow(p.created_at) }}</span>
+            <span class="text-sub time-tag" style="margin-left: auto; font-size: 12.5px">{{ fromNow(p.created_at) }}</span>
           </div>
           <p class="post-content">{{ p.content }}</p>
           <div class="text-sub" style="font-size: 13px">
@@ -228,6 +228,10 @@ function goHotline() {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+.post-meta .time-tag {
+  margin-left: auto;
 }
 .board-chip {
   font-size: 12px;
@@ -246,17 +250,43 @@ function goHotline() {
 @media (max-width: 760px) {
   .hero {
     flex-direction: column-reverse;
-    padding: 30px 24px;
+    padding: 26px 20px;
   }
   .hero-illu {
     margin: 0;
   }
+  .hero-illu .el-icon {
+    font-size: 96px !important;
+  }
+  .hero h1 {
+    font-size: 25px;
+    letter-spacing: 0;
+  }
+  .hero-sub {
+    font-size: 14px;
+  }
+  .hero-actions {
+    flex-wrap: wrap;
+  }
+  .hero-actions .el-button {
+    margin-left: 0 !important;
+  }
   .feature-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   .hero-tips {
     flex-wrap: wrap;
     gap: 10px;
+  }
+  .post-item {
+    padding: 14px 15px;
+  }
+  .post-meta .time-tag {
+    margin-left: 0;
+  }
+  .feature-card {
+    padding: 20px;
   }
 }
 </style>

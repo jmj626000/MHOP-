@@ -341,11 +341,48 @@ onMounted(async () => {
 }
 @media (max-width: 900px) {
   .assess-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .result-card,
   .history-card {
     position: static;
+  }
+}
+@media (max-width: 640px) {
+  .type-group {
+    display: flex;
+  }
+  .type-group .el-radio-button {
+    flex: 1 1 auto;
+  }
+  .form-card {
+    padding: 16px 14px;
+  }
+  /* 量表选项可换行，避免四个选项挤一行 */
+  .question-item .el-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 4px;
+  }
+  .question-item .el-radio {
+    margin-right: 0;
+  }
+  .submit-row {
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+  .submit-row .el-button {
+    width: 100%;
+  }
+  .score-num {
+    font-size: 34px;
+  }
+  .history-item {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .history-item .text-sub {
+    margin-left: 0 !important;
   }
 }
 </style>

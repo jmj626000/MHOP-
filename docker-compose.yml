@@ -1,6 +1,11 @@
 # MHOP 服务器部署编排
 # 使用方式见 README「服务器部署（Docker 一键）」。
-# 后端不直接暴露公网端口，只由 Caddy 反代；Caddy 自动申请并续期 Let's Encrypt 证书。
+#
+# 两种部署形态：
+# 1) 有域名 + 80/443 端口：docker compose --profile tls up -d --build
+#    Caddy 反代并自动申请 Let's Encrypt 证书，后端不对公网暴露。
+# 2) 只有高位端口（如 10000）/ 无域名：在根目录 .env 设置 BACKEND_PUBLISH=10000，
+#    然后 docker compose up -d --build，直接 http://服务器IP:10000 访问（无 TLS）。
 
 services:
   backend:
@@ -18,10 +23,14 @@ services:
       - ./data:/app/data
     expose:
       - "8000"
+    ports:
+      # 默认只绑定本机回环；高位端口直连部署时在 .env 设 BACKEND_PUBLISH=10000
+      - "${BACKEND_PUBLISH:-127.0.0.1:8000}:8000"
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    profiles: ["tls"] # 仅在有域名、能使用 80/443 时用 --profile tls 启动
     depends_on:
       - backend
     ports:

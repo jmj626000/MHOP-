@@ -23,6 +23,14 @@ export const useAuthStore = defineStore('auth', {
       this.setAuth(data.access_token, data.user)
       return data.user
     },
+    async sendEmailCode(email) {
+      return await http.post('/auth/email-code', { email }, { timeout: 20000 })
+    },
+    async loginByEmail(email, code) {
+      const data = await http.post('/auth/login-email', { email, code })
+      this.setAuth(data.access_token, data.user)
+      return { user: data.user, newAccount: !!data.new_account }
+    },
     async register(username, password) {
       const data = await http.post('/auth/register', { username, password })
       this.setAuth(data.access_token, data.user)

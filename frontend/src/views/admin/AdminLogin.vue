@@ -71,10 +71,16 @@ async function submit() {
 }
 .login-card {
   width: 420px;
+  max-width: calc(100vw - 28px);
   background: rgba(255, 255, 255, 0.97);
   border-radius: 18px;
   padding: 40px 38px 26px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+@media (max-width: 640px) {
+  .login-card {
+    padding: 28px 22px 22px;
+  }
 }
 .login-brand {
   text-align: center;

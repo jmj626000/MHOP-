@@ -28,6 +28,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(64), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=True, index=True)  # 邮箱验证码登录；可空
     role = Column(String(16), default="user", nullable=False)  # admin / user
     status = Column(String(16), default="active", nullable=False)  # active / disabled
     created_at = Column(DateTime, default=_now)

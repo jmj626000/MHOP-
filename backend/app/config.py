@@ -26,6 +26,17 @@ class Settings(BaseSettings):
     # 北京乐科心理干预研究院专属援助电话（由运营方提供后配置）
     LEKE_HOTLINE: str = ""
 
+    # SMTP 邮箱发信（用于邮箱验证码登录）。SMTP_HOST 留空时进入开发模式：
+    # 验证码不真正发邮件，而是写入后端日志并由发送接口直接返回 dev_code。
+    # 常见配置：QQ 邮箱 465/SSL(smtp.qq.com)、163 465/SSL(smtp.163.com)、Gmail 587/STARTTLS。
+    # 密码处填邮箱的“授权码/应用专用密码”，不是邮箱登录密码。
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 465
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""          # 留空则取 SMTP_USER
+    SMTP_USE_SSL: bool = True    # True=隐式 SSL(465)；False=STARTTLS(587)
+
     # 前端构建产物目录（存在时由后端一并托管，Docker 生产部署使用；本地开发留空目录即可）
     STATIC_DIR: str = "static"
 

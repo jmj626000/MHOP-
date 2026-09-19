@@ -129,4 +129,46 @@ function onCommand(cmd) {
   background: #f4f2ed;
   padding: 22px;
 }
+
+/* 移动端：侧边栏变为顶部横向滚动菜单 */
+@media (max-width: 760px) {
+  .admin-shell {
+    height: auto;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+  .admin-aside {
+    width: 100% !important;
+    height: auto !important;
+  }
+  .logo {
+    padding: 12px 14px;
+  }
+  .logo small {
+    display: none;
+  }
+  .admin-aside :deep(.el-menu) {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin-aside :deep(.el-menu::-webkit-scrollbar) {
+    display: none;
+  }
+  .admin-aside :deep(.el-menu-item) {
+    flex: none;
+    margin: 4px 6px;
+    white-space: nowrap;
+  }
+  .admin-header {
+    height: auto !important;
+    min-height: 50px;
+    padding: 8px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .admin-main {
+    padding: 14px 10px;
+  }
+}
 </style>

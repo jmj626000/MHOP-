@@ -1,4 +1,4 @@
-"""论坛互助：板块、发帖即展示（进入巡检队列）、AI 异步自动回复、人类回复先审后发、点赞。"""
+"""论坛互助：板块、登录发帖、新帖默认通过、AI 异步自动回复、人类回复先审后发、点赞。"""
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -138,7 +138,7 @@ def boards(db: Session = Depends(get_db)):
     """板块元数据 + 各板块可见主题数。"""
     rows = db.execute(
         select(Post.board, func.count())
-        .where(Post.status != 2)
+        .where(Post.status == 1)
         .group_by(Post.board)
     ).all()
     counts = {slug: cnt for slug, cnt in rows}
@@ -149,7 +149,7 @@ def boards(db: Session = Depends(get_db)):
 def public_stats(db: Session = Depends(get_db)):
     """论坛首页侧边栏公开统计。"""
     return {
-        "posts": db.scalar(select(func.count()).select_from(Post).where(Post.status != 2)) or 0,
+        "posts": db.scalar(select(func.count()).select_from(Post).where(Post.status == 1)) or 0,
         "replies": db.scalar(select(func.count()).select_from(Reply).where(Reply.status == 1)) or 0,
         "users": db.scalar(select(func.count()).select_from(User)) or 0,
         "online": online.online_count(),
@@ -166,7 +166,7 @@ def list_posts(
     db: Session = Depends(get_db),
     current: User | None = Depends(get_user_optional),
 ):
-    stmt = select(Post).where(Post.status != 2)
+    stmt = select(Post).where(Post.status == 1)
     if keyword.strip():
         stmt = stmt.where(Post.content.like(f"%{keyword.strip()}%"))
     if board:
@@ -205,7 +205,7 @@ def create_post(
     body: PostIn,
     background: BackgroundTasks,
     db: Session = Depends(get_db),
-    current: User | None = Depends(get_user_optional),
+    current: User = Depends(get_current_user),
 ):
     content = body.content.strip()
     if not content:
@@ -214,11 +214,11 @@ def create_post(
         raise HTTPException(status_code=400, detail="请选择板块")
     crisis = detect_crisis(content)
     post = Post(
-        user_id=current.id if current and not body.is_anonymous else None,
-        is_anonymous=body.is_anonymous or current is None,
+        user_id=current.id if not body.is_anonymous else None,
+        is_anonymous=body.is_anonymous,
         content=content,
         board=body.board,
-        status=0,  # 发帖即可见，同时进入管理员巡检队列
+        status=0,  # 待审核，管理员通过后才公开展示
         crisis=crisis,
     )
     db.add(post)
@@ -237,8 +237,8 @@ def get_post(
     current: User | None = Depends(get_user_optional),
 ):
     post = db.get(Post, post_id)
-    if not post or post.status == 2:
-        raise HTTPException(status_code=404, detail="帖子不存在或已被移除")
+    if not post or post.status != 1:
+        raise HTTPException(status_code=404, detail="帖子不存在或正在审核中")
     if inc_view:
         post.view_count = (post.view_count or 0) + 1
         db.commit()
@@ -262,7 +262,7 @@ def create_reply(
     post_id: int,
     body: ReplyIn,
     db: Session = Depends(get_db),
-    current: User | None = Depends(get_user_optional),
+    current: User = Depends(get_current_user),
 ):
     post = db.get(Post, post_id)
     if not post or post.status == 2:
@@ -275,8 +275,8 @@ def create_reply(
     words = hit_sensitive(content)
     reply = Reply(
         post_id=post_id,
-        user_id=current.id if current and not body.is_anonymous else None,
-        is_anonymous=body.is_anonymous or current is None,
+        user_id=current.id if not body.is_anonymous else None,
+        is_anonymous=body.is_anonymous,
         content=content,
         crisis=crisis,
     )
@@ -284,7 +284,7 @@ def create_reply(
         reply.status = 2  # 命中违规词，系统直接拦截
         reply.review_note = f"系统拦截：命中敏感词 {','.join(words)}"
     else:
-        reply.status = 0  # 人类回复默认待审核，通过后才公开展示
+        reply.status = 0  # 待审核，管理员通过后才公开展示
     db.add(reply)
     db.commit()
     db.refresh(reply)

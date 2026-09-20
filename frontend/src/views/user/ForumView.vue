@@ -112,6 +112,7 @@
         :maxlength="2000"
         placeholder="我在这里，你可以放心说。发布后 AI 心理助手会立刻回应你……"
       />
+      <p class="text-sub" style="font-size: 12.5px; margin-top: 6px">登录后可发帖，提交后需管理员审核通过才公开展示。</p>
       <el-alert
         v-if="crisis"
         class="crisis-alert"
@@ -124,7 +125,6 @@
       <template #footer>
         <div class="composer-foot">
           <el-checkbox v-if="auth.isLoggedIn" v-model="form.is_anonymous">匿名发布</el-checkbox>
-          <span v-else class="text-sub" style="font-size: 12.5px">匿名访问，无需注册</span>
           <el-button type="primary" round :loading="submitting" @click="submit">
             <el-icon><Promotion /></el-icon> 发布并获得 AI 回应
           </el-button>
@@ -252,14 +252,13 @@ async function submit() {
       is_anonymous: form.value.is_anonymous,
       board: form.value.board,
     })
-    ElMessage.success('已发布，AI 心理助手正在回应…')
+    ElMessage.success('已提交，管理员审核通过后将公开展示')
     composerVisible.value = false
     await fetchSide()
     if (board.value && board.value !== form.value.board) {
       board.value = ''
     }
     await reload(1)
-    router.push(`/forum/${post.id}`)
   } finally {
     submitting.value = false
   }

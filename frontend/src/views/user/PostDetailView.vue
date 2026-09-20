@@ -137,7 +137,7 @@
           <!-- 回复框 -->
           <section class="mhop-card reply-composer">
             <h4>我想回应 TA</h4>
-            <p class="text-sub tip">人类回复将先进入系统审核，通过后公开展示；支持 Markdown 排版，请避免评判、说教或提供伤害方法。</p>
+            <p class="text-sub tip">登录后可回复，提交后需管理员审核通过才公开展示；支持 Markdown 排版，请避免评判、说教或提供伤害方法。</p>
             <MdComposer
               v-model="draft"
               :rows="4"
@@ -260,6 +260,11 @@ function scrollTo(where) {
 }
 
 async function submit() {
+  if (!auth.isLoggedIn) {
+    ElMessage.warning('登录后才能回复')
+    router.push('/login')
+    return
+  }
   const content = draft.value.trim()
   if (!content) {
     ElMessage.warning('先写点回应吧')

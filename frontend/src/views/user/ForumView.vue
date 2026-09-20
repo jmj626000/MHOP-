@@ -53,9 +53,16 @@
 
       <div class="topic-list mhop-card" v-loading="loading">
         <div v-for="p in posts" :key="p.id" class="topic-row" @click="router.push(`/forum/${p.id}`)">
-          <span class="t-avatar"><el-icon><User /></el-icon></span>
+          <span class="t-avatar">
+            <img v-if="p.author_avatar" :src="p.author_avatar" class="t-avatar-img" />
+            <el-icon v-else><User /></el-icon>
+          </span>
           <div class="t-main">
             <p class="t-title">{{ firstLine(p.content) }}</p>
+            <div v-if="p.images?.length" class="t-thumbs">
+              <img v-for="(img, i) in p.images.slice(0, 3)" :key="i" :src="img" class="t-thumb" />
+              <span v-if="p.images.length > 3" class="t-thumb-more">+{{ p.images.length - 3 }}</span>
+            </div>
             <p class="t-excerpt">{{ p.content }}</p>
             <div class="t-tags">
               <span class="board-chip" :style="chipStyle(p.board)">{{ boardOf(p.board).name }}</span>
@@ -64,7 +71,11 @@
                 <el-icon><MagicStick /></el-icon> AI 已回应
               </el-tag>
               <el-tag v-if="p.status === 0" size="small" type="warning" effect="plain">巡检中</el-tag>
-              <span class="t-author">{{ p.author }} · 发布于 {{ fromNow(p.created_at) }}</span>
+              <span class="t-author">
+                {{ p.author }}
+                <el-tag v-if="p.author_badge" size="small" type="success" effect="dark" style="margin-right: 4px">{{ p.author_badge }}</el-tag>
+                · 发布于 {{ fromNow(p.created_at) }}
+              </span>
               <span v-if="p.last_reply_at" class="t-last">
                 <el-icon><Back /></el-icon>{{ p.last_reply_author }} · {{ fromNow(p.last_reply_at) }}
               </span>
@@ -113,6 +124,19 @@
         placeholder="我在这里，你可以放心说。发布后 AI 心理助手会立刻回应你……"
       />
       <p class="text-sub" style="font-size: 12.5px; margin-top: 6px">登录后可发帖，提交后需管理员审核通过才公开展示。</p>
+      <!-- 图片上传 -->
+      <div class="post-images">
+        <div class="img-thumbs">
+          <div v-for="(img, i) in form.images" :key="i" class="img-thumb">
+            <img :src="img" />
+            <span class="img-remove" @click="form.images.splice(i, 1)">&times;</span>
+          </div>
+          <button v-if="form.images.length < 9" class="img-add" @click="pickImage" type="button">
+            <el-icon><Plus /></el-icon>
+          </button>
+        </div>
+        <input ref="imageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" @change="onImageChange" />
+      </div>
       <el-alert
         v-if="crisis"
         class="crisis-alert"
@@ -162,8 +186,9 @@ const board = ref('')
 const sort = ref('latest')
 
 const composerVisible = ref(false)
-const form = ref({ board: 'mood', content: '', is_anonymous: true })
+const form = ref({ board: 'mood', content: '', is_anonymous: true, images: [] })
 const submitting = ref(false)
+const imageInput = ref(null)
 const crisis = computed(() => hasCrisisHint(form.value.content))
 
 function firstLine(content) {
@@ -232,11 +257,11 @@ async function togglePostLike(p) {
 }
 
 function openComposer() {
-  form.value = { board: board.value || 'mood', content: '', is_anonymous: true }
+  form.value = { board: board.value || 'mood', content: '', is_anonymous: true, images: [] }
   composerVisible.value = true
 }
 function resetForm() {
-  form.value = { board: 'mood', content: '', is_anonymous: true }
+  form.value = { board: 'mood', content: '', is_anonymous: true, images: [] }
 }
 
 async function submit() {
@@ -251,6 +276,7 @@ async function submit() {
       content,
       is_anonymous: form.value.is_anonymous,
       board: form.value.board,
+      images: form.value.images,
     })
     ElMessage.success('已提交，管理员审核通过后将公开展示')
     composerVisible.value = false
@@ -262,6 +288,27 @@ async function submit() {
   } finally {
     submitting.value = false
   }
+}
+
+function pickImage() {
+  imageInput.value?.click()
+}
+
+async function onImageChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片不能超过 5MB')
+    e.target.value = ''
+    return
+  }
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const data = await http.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    form.value.images.push(data.url)
+  } catch { /* handled by interceptor */ }
+  e.target.value = ''
 }
 
 onMounted(() => {
@@ -553,4 +600,36 @@ onMounted(() => {
     gap: 10px;
   }
 }
+
+/* 图片上传 */
+.post-images { margin-top: 10px; }
+.img-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.img-thumb {
+  position: relative;
+  width: 72px; height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.img-remove {
+  position: absolute; top: 2px; right: 4px;
+  color: #fff; cursor: pointer; font-size: 18px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.img-add {
+  width: 72px; height: 72px;
+  border: 1.5px dashed #c0c6cc;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #909399; font-size: 22px;
+}
+.img-add:hover { border-color: var(--mhop-primary, #5b8def); color: var(--mhop-primary, #5b8def); }
+
+/* 帖子列表缩略图 */
+.t-avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.t-thumbs { display: flex; gap: 6px; margin: 6px 0; }
+.t-thumb { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; }
+.t-thumb-more { font-size: 12px; color: #909399; line-height: 56px; }
 </style>

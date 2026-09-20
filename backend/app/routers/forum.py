@@ -1,4 +1,6 @@
 """论坛互助：板块、登录发帖、新帖默认通过、AI 异步自动回复、人类回复先审后发、点赞。"""
+import json
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -21,13 +23,26 @@ from ..schemas import (
 router = APIRouter(prefix="/api/forum", tags=["forum"])
 
 
-def _author_for(obj, db: Session) -> str:
+def _author_for(obj, db: Session) -> tuple[str, str, str]:
+    """返回 (作者名, 头像URL, 标识)"""
     if getattr(obj, "is_ai", False):
-        return "AI 心理助手"
+        return "AI 心理助手", "", ""
     if not obj.is_anonymous and obj.user_id is not None:
         u = db.get(User, obj.user_id)
-        return u.username if u else "实名用户"
-    return "匿名朋友"
+        if u:
+            return u.username, u.avatar or "", u.badge or ""
+        return "实名用户", "", ""
+    return "匿名朋友", "", ""
+
+
+def _parse_images(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    try:
+        imgs = json.loads(raw)
+        return [str(u) for u in imgs if isinstance(u, str)][:9]
+    except (json.JSONDecodeError, TypeError):
+        return []
 
 
 # ---------------- 点赞辅助 ----------------
@@ -63,19 +78,23 @@ def _visible_replies(post: Post) -> list[Reply]:
 
 def _reply_out(r: Reply, db: Session, counts: dict, liked: set) -> ReplyOut:
     recalled = bool(r.recalled)
+    author, avatar, badge = _author_for(r, db)
     return ReplyOut(
         id=r.id,
         post_id=r.post_id,
-        content="" if recalled else r.content,  # 撤回后公开接口不下发正文
+        content="" if recalled else r.content,
         status=r.status,
         is_ai=r.is_ai,
         is_anonymous=r.is_anonymous,
-        author=_author_for(r, db),
+        author=author,
+        author_avatar=avatar,
+        author_badge=badge,
         crisis=r.crisis,
         recalled=recalled,
         recall_reason=r.recall_reason or "",
         like_count=counts.get(r.id, 0),
         liked=r.id in liked,
+        images=_parse_images(r.images),
         created_at=r.created_at,
     )
 
@@ -89,6 +108,8 @@ def _post_out(
 ) -> PostOut:
     visible = _visible_replies(p)
     last = max(visible, key=lambda r: r.created_at, default=None)
+    author, avatar, badge = _author_for(p, db)
+    last_author, _, _ = _author_for(last, db) if last else ("", "", "")
     return PostOut(
         id=p.id,
         content=p.content,
@@ -96,15 +117,18 @@ def _post_out(
         status=p.status,
         crisis=p.crisis,
         is_anonymous=p.is_anonymous,
-        author=_author_for(p, db),
+        author=author,
+        author_avatar=avatar,
+        author_badge=badge,
         reply_count=len(visible),
         view_count=p.view_count or 0,
         ai_replied=any(r.is_ai for r in visible),
         mine=bool(current and p.user_id == current.id),
         like_count=(like_counts or {}).get(p.id, 0),
         liked=p.id in (liked or set()),
+        images=_parse_images(p.images),
         last_reply_at=last.created_at if last else None,
-        last_reply_author=_author_for(last, db) if last else "",
+        last_reply_author=last_author,
         created_at=p.created_at,
     )
 
@@ -218,6 +242,7 @@ def create_post(
         is_anonymous=body.is_anonymous,
         content=content,
         board=body.board,
+        images=json.dumps(body.images) if body.images else "",
         status=0,  # 待审核，管理员通过后才公开展示
         crisis=crisis,
     )
@@ -278,6 +303,7 @@ def create_reply(
         user_id=current.id if not body.is_anonymous else None,
         is_anonymous=body.is_anonymous,
         content=content,
+        images=json.dumps(body.images) if body.images else "",
         crisis=crisis,
     )
     if words:

@@ -33,6 +33,18 @@ def migrate_schema() -> None:
         user_columns = {c["name"] for c in inspector.get_columns("users")}
         if "email" not in user_columns:
             alters.append("ALTER TABLE users ADD COLUMN email VARCHAR(255)")
+        if "avatar" not in user_columns:
+            alters.append("ALTER TABLE users ADD COLUMN avatar VARCHAR(255) NOT NULL DEFAULT ''")
+        if "badge" not in user_columns:
+            alters.append("ALTER TABLE users ADD COLUMN badge VARCHAR(64) NOT NULL DEFAULT ''")
+    if "posts" in inspector.get_table_names():
+        post_columns = {c["name"] for c in inspector.get_columns("posts")}
+        if "images" not in post_columns:
+            alters.append("ALTER TABLE posts ADD COLUMN images TEXT DEFAULT ''")
+    if "replies" in inspector.get_table_names():
+        reply_columns = {c["name"] for c in inspector.get_columns("replies")}
+        if "images" not in reply_columns:
+            alters.append("ALTER TABLE replies ADD COLUMN images TEXT DEFAULT ''")
     if alters:
         with engine.begin() as conn:
             for sql in alters:

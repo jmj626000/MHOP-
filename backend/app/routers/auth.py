@@ -14,6 +14,7 @@ from ..schemas import (
     EmailCodeIn,
     EmailLoginIn,
     LoginIn,
+    ProfileUpdateIn,
     RegisterIn,
     TokenOut,
     UserOut,
@@ -110,4 +111,33 @@ def login_by_email(body: EmailLoginIn, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.put("/profile", response_model=UserOut)
+def update_profile(
+    body: ProfileUpdateIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """修改用户名和头像。"""
+    username = body.username.strip()
+    if len(username) < 2:
+        raise HTTPException(status_code=400, detail="用户名至少 2 个字符")
+    existing = db.scalar(select(User).where(User.username == username, User.id != user.id))
+    if existing:
+        raise HTTPException(status_code=400, detail="用户名已被占用")
+    user.username = username
+    user.avatar = body.avatar
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.get("/users/{user_id}", response_model=UserOut)
+def get_user_public(user_id: int, db: Session = Depends(get_db)):
+    """查看其他用户的公开资料。"""
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
     return user

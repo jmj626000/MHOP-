@@ -26,12 +26,16 @@
           <!-- 原帖楼层 -->
           <section ref="topRef" class="floor mhop-card">
             <div class="floor-side">
-              <span class="f-avatar"><el-icon><User /></el-icon></span>
+              <span class="f-avatar">
+                <img v-if="post.author_avatar" :src="post.author_avatar" class="f-avatar-img" />
+                <el-icon v-else><User /></el-icon>
+              </span>
               <span class="floor-no">#楼主</span>
             </div>
             <div class="floor-body">
               <div class="floor-head">
                 <strong>{{ post.is_anonymous ? '匿名朋友' : post.author }}</strong>
+                <el-tag v-if="post.author_badge" size="small" type="success" effect="dark">{{ post.author_badge }}</el-tag>
                 <span class="text-sub" style="font-size: 12.5px">{{ fmtTime(post.created_at) }}</span>
               </div>
               <el-alert
@@ -44,6 +48,9 @@
                 description="如果你也有类似感受，请立即拨打 12356 或 010-82951332；紧急危险请拨打 110/120。回复时请优先传递陪伴与求助信息。"
               />
               <div class="md-body floor-content" v-html="renderMarkdown(post.content)"></div>
+              <div v-if="post.images?.length" class="floor-images">
+                <img v-for="(img, i) in post.images" :key="i" :src="img" class="floor-img" @click="previewImage(img)" />
+              </div>
               <div class="floor-actions">
                 <button class="act-like" :class="{ on: post.liked }" @click="likeTarget('post', post)">
                   <el-icon><component :is="post.liked ? 'StarFilled' : 'Star'" /></el-icon>
@@ -70,7 +77,8 @@
               :class="['floor', r.is_ai ? 'ai-floor' : 'mhop-card', { recalled: r.recalled }]">
               <div class="floor-side">
                 <span class="f-avatar" :class="{ ai: r.is_ai, recalled: r.recalled }">
-                  <el-icon><component :is="r.is_ai ? 'MagicStick' : 'User'" /></el-icon>
+                  <img v-if="r.author_avatar && !r.is_ai" :src="r.author_avatar" class="f-avatar-img" />
+                  <el-icon v-else><component :is="r.is_ai ? 'MagicStick' : 'User'" /></el-icon>
                 </span>
                 <span class="floor-no">#{{ idx + 1 }}</span>
               </div>
@@ -97,6 +105,7 @@
                 <template v-else>
                   <div class="floor-head">
                     <strong>{{ r.author }}</strong>
+                    <el-tag v-if="r.author_badge" size="small" type="success" effect="dark">{{ r.author_badge }}</el-tag>
                     <span v-if="r.is_ai" class="ai-badge"><el-icon><MagicStick /></el-icon> AI 即时陪伴</span>
                     <el-tag v-if="r.crisis" size="small" type="danger" effect="light">含安全提示</el-tag>
                     <el-button v-if="auth.isAdmin && r.is_ai" size="small" type="danger" plain
@@ -106,6 +115,9 @@
                     <span class="text-sub floor-time" style="font-size: 12.5px">{{ fromNow(r.created_at) }}</span>
                   </div>
                   <div class="md-body floor-content" v-html="renderMarkdown(r.content)"></div>
+                  <div v-if="r.images?.length" class="floor-images">
+                    <img v-for="(img, i) in r.images" :key="i" :src="img" class="floor-img" @click="previewImage(img)" />
+                  </div>
                   <div class="floor-actions">
                     <button class="act-like" :class="{ on: r.liked }" @click="likeTarget('reply', r)">
                       <el-icon><component :is="r.liked ? 'StarFilled' : 'Star'" /></el-icon>
@@ -152,6 +164,18 @@
               style="margin-top: 10px"
               title="检测到危机相关表达，提交后将优先进入人工审核"
             />
+            <div class="reply-images" v-if="replyImages.length || auth.isLoggedIn">
+              <div class="img-thumbs">
+                <div v-for="(img, i) in replyImages" :key="i" class="img-thumb">
+                  <img :src="img" />
+                  <span class="img-remove" @click="replyImages.splice(i, 1)">&times;</span>
+                </div>
+                <button v-if="replyImages.length < 9 && auth.isLoggedIn" class="img-add" @click="replyImageInput?.click()" type="button">
+                  <el-icon><Plus /></el-icon>
+                </button>
+              </div>
+              <input ref="replyImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" @change="onReplyImage" />
+            </div>
             <div class="composer-foot">
               <el-checkbox v-if="auth.isLoggedIn" v-model="replyAnonymous">匿名回复</el-checkbox>
               <el-button type="primary" round :loading="submitting" @click="submit">
@@ -181,6 +205,9 @@
         </aside>
       </div>
     </template>
+
+    <!-- 图片预览 -->
+    <el-image-viewer v-if="previewVisible" :url-list="[previewSrc]" @close="previewVisible = false" />
   </div>
 </template>
 
@@ -204,6 +231,8 @@ const post = ref(null)
 const loading = ref(false)
 const draft = ref('')
 const replyAnonymous = ref(true)
+const replyImages = ref([])
+const replyImageInput = ref(null)
 const submitting = ref(false)
 const myPending = ref([])
 const topRef = ref(null)
@@ -259,6 +288,30 @@ function scrollTo(where) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+async function onReplyImage(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片不能超过 5MB')
+    e.target.value = ''
+    return
+  }
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const data = await http.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    replyImages.value.push(data.url)
+  } catch { /* handled by interceptor */ }
+  e.target.value = ''
+}
+
+const previewSrc = ref('')
+const previewVisible = ref(false)
+function previewImage(url) {
+  previewSrc.value = url
+  previewVisible.value = true
+}
+
 async function submit() {
   if (!auth.isLoggedIn) {
     ElMessage.warning('登录后才能回复')
@@ -275,8 +328,10 @@ async function submit() {
     const reply = await http.post(`/forum/posts/${post.value.id}/replies`, {
       content,
       is_anonymous: replyAnonymous.value,
+      images: replyImages.value,
     })
     draft.value = ''
+    replyImages.value = []
     if (reply.status === 2) {
       ElMessage.error('回复含违规内容，已被系统拦截')
     } else {
@@ -615,4 +670,35 @@ onBeforeUnmount(stopPolling)
     margin: 0;
   }
 }
+
+/* 头像图片 */
+.f-avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+/* 楼层图片 */
+.floor-images { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.floor-img {
+  width: 120px; height: 120px;
+  border-radius: 8px; object-fit: cover;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.floor-img:hover { opacity: 0.85; }
+
+/* 回复图片上传 */
+.reply-images { margin-top: 10px; }
+.img-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.img-thumb { position: relative; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; }
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.img-remove {
+  position: absolute; top: 2px; right: 4px;
+  color: #fff; cursor: pointer; font-size: 16px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.img-add {
+  width: 64px; height: 64px;
+  border: 1.5px dashed #c0c6cc; border-radius: 8px;
+  background: #fafafa; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #909399; font-size: 20px;
+}
+.img-add:hover { border-color: var(--mhop-primary, #5b8def); color: var(--mhop-primary, #5b8def); }
 </style>

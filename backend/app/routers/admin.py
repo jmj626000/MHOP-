@@ -10,6 +10,7 @@ from ..database import get_db
 from ..deps import get_admin
 from ..models import AiLog, Assessment, Post, Reply, User
 from ..schemas import ModerateIn, RecallIn, StatusIn, UserOut
+from ..security import hash_password
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(get_admin)])
 
@@ -182,6 +183,74 @@ def set_user_status(user_id: int, body: StatusIn, admin: User = Depends(get_admi
     if user.id == admin.id and body.status == "disabled":
         raise HTTPException(status_code=400, detail="不能停用当前登录的管理员")
     user.status = body.status
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/users/{user_id}/badge")
+def set_user_badge(
+    user_id: int,
+    body: dict,
+    admin: User = Depends(get_admin),
+    db: Session = Depends(get_db),
+):
+    """设置用户标识。badge 为空字符串表示清除标识。"""
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    badge = (body.get("badge") or "").strip()[:64]
+    user.badge = badge
+    db.commit()
+    return {"ok": True, "badge": badge}
+
+
+@router.post("/users/{user_id}/role")
+def set_user_role(
+    user_id: int,
+    body: dict,
+    admin: User = Depends(get_admin),
+    db: Session = Depends(get_db),
+):
+    """设置/取消管理员角色。action: promote / demote"""
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    action = body.get("action")
+    if action == "promote":
+        if user.role == "admin":
+            raise HTTPException(status_code=400, detail="该用户已是管理员")
+        user.role = "admin"
+    elif action == "demote":
+        if user.role != "admin":
+            raise HTTPException(status_code=400, detail="该用户不是管理员")
+        if user.id == admin.id:
+            raise HTTPException(status_code=400, detail="不能取消自己的管理员权限")
+        # 确保至少保留一个管理员
+        admin_count = db.scalar(select(func.count()).select_from(User).where(User.role == "admin"))
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="系统至少需要保留一个管理员")
+        user.role = "user"
+    else:
+        raise HTTPException(status_code=400, detail="非法操作")
+    db.commit()
+    return {"ok": True, "role": user.role}
+
+
+@router.post("/users/{user_id}/reset-password")
+def reset_user_password(
+    user_id: int,
+    body: dict,
+    admin: User = Depends(get_admin),
+    db: Session = Depends(get_db),
+):
+    """管理员重置用户密码。"""
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+    new_password = (body.get("password") or "").strip()
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 位")
+    user.password_hash = hash_password(new_password)
     db.commit()
     return {"ok": True}
 

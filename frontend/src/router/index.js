@@ -12,6 +12,7 @@ const routes = [
       { path: 'assessment', name: 'assessment', component: () => import('../views/user/AssessmentView.vue') },
       { path: 'login', name: 'login', component: () => import('../views/user/LoginView.vue') },
       { path: 'register', name: 'register', component: () => import('../views/user/RegisterView.vue') },
+      { path: 'profile', name: 'profile', component: () => import('../views/user/ProfileView.vue'), meta: { requiresAuth: true } },
     ],
   },
   { path: '/admin/login', name: 'admin-login', component: () => import('../views/admin/AdminLogin.vue') },
@@ -39,9 +40,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  const auth = useAuthStore()
   if (to.meta.requiresAdmin) {
-    const auth = useAuthStore()
     if (!auth.isAdmin) return { name: 'admin-login' }
+  }
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return { name: 'login' }
   }
   return true
 })

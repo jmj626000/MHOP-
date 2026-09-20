@@ -31,6 +31,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=True, index=True)  # 邮箱验证码登录；可空
     role = Column(String(16), default="user", nullable=False)  # admin / user
     status = Column(String(16), default="active", nullable=False)  # active / disabled
+    avatar = Column(String(255), default="", nullable=False)  # 头像 URL 路径
+    badge = Column(String(64), default="", nullable=False)  # 管理员设置的用户标识（如"认证咨询师""志愿者"等）
     created_at = Column(DateTime, default=_now)
 
 
@@ -42,6 +44,7 @@ class Post(Base):
     is_anonymous = Column(Boolean, default=True, nullable=False)
     content = Column(Text, nullable=False)
     board = Column(String(16), default="mood", nullable=False, index=True)  # 见 boards.py
+    images = Column(Text, default="")  # JSON 数组，帖子附图 URL 列表
     # 0=待巡检 1=正常 2=违规(隐藏)
     status = Column(Integer, default=0, nullable=False, index=True)
     crisis = Column(Boolean, default=False, nullable=False)  # 内容含自伤/自杀信号
@@ -60,6 +63,7 @@ class Reply(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_anonymous = Column(Boolean, default=True, nullable=False)
     content = Column(Text, nullable=False)
+    images = Column(Text, default="")  # JSON 数组，回复附图 URL 列表
     # 0=待系统审核 1=审核通过 2=驳回
     status = Column(Integer, default=0, nullable=False, index=True)
     is_ai = Column(Boolean, default=False, nullable=False)

@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # 前端构建产物目录（存在时由后端一并托管，Docker 生产部署使用；本地开发留空目录即可）
     STATIC_DIR: str = "static"
 
+    # 用户上传文件目录（头像、帖子图片等）
+    UPLOAD_DIR: str = "uploads"
+
 
 settings = Settings()
 

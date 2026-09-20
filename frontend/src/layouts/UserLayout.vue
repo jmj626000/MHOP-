@@ -22,12 +22,16 @@
           <template v-if="auth.isLoggedIn">
             <el-dropdown @command="onCommand" class="user-dropdown">
               <span class="user-trigger">
-                <el-icon><UserFilled /></el-icon>
+                <img v-if="auth.user?.avatar" :src="auth.user.avatar" class="nav-avatar" />
+                <el-icon v-else><UserFilled /></el-icon>
                 {{ auth.displayName }}
                 <el-icon><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item command="profile">
+                    <el-icon><User /></el-icon>个人主页
+                  </el-dropdown-item>
                   <el-dropdown-item v-if="auth.isAdmin" command="admin">
                     <el-icon><Setting /></el-icon>管理后台
                   </el-dropdown-item>
@@ -64,6 +68,7 @@
         <router-link to="/"><el-icon><HomeFilled /></el-icon> 首页</router-link>
         <router-link to="/forum"><el-icon><ChatLineSquare /></el-icon> 互助论坛</router-link>
         <router-link to="/assessment"><el-icon><DataAnalysis /></el-icon> AI 心理评估</router-link>
+        <router-link v-if="auth.isLoggedIn" to="/profile"><el-icon><User /></el-icon> 个人主页</router-link>
       </nav>
       <div class="drawer-actions">
         <template v-if="auth.isLoggedIn">
@@ -130,6 +135,7 @@ function logoutMobile() {
 }
 
 function onCommand(cmd) {
+  if (cmd === 'profile') router.push('/profile')
   if (cmd === 'admin') router.push('/admin/dashboard')
   if (cmd === 'logout') {
     ElMessageBox.confirm('确定退出登录吗？', '提示', { type: 'warning' })
@@ -211,6 +217,12 @@ function onCommand(cmd) {
   cursor: pointer;
   color: var(--mhop-text);
   outline: none;
+}
+.nav-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .site-footer {
   background: #efebe2;

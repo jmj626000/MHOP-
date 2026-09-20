@@ -12,11 +12,17 @@
           社区里有相似经历的人彼此陪伴，专业援助热线始终为你待命。
         </p>
         <div class="hero-actions">
-          <router-link to="/forum"><el-button type="primary" size="large" round><el-icon><EditPen /></el-icon>我想倾诉</el-button></router-link>
-          <router-link to="/assessment"><el-button size="large" round plain><el-icon><DataAnalysis /></el-icon>做一次心理评估</el-button></router-link>
+          <template v-if="auth.isLoggedIn">
+            <router-link to="/forum"><el-button type="primary" size="large" round><el-icon><EditPen /></el-icon>我想倾诉</el-button></router-link>
+            <router-link to="/assessment"><el-button size="large" round plain><el-icon><DataAnalysis /></el-icon>做一次心理评估</el-button></router-link>
+          </template>
+          <template v-else>
+            <router-link to="/register"><el-button type="primary" size="large" round><el-icon><EditPen /></el-icon>注册</el-button></router-link>
+            <router-link to="/login"><el-button size="large" round plain><el-icon><User /></el-icon>登录</el-button></router-link>
+          </template>
         </div>
         <div class="hero-tips">
-          <span><el-icon><Lock /></el-icon> 匿名发布，无需注册</span>
+          <span><el-icon><Lock /></el-icon> 匿名发布，保护隐私</span>
           <span><el-icon><ChatDotRound /></el-icon> AI 秒级回应</span>
           <span><el-icon><PhoneFilled /></el-icon> 危机一键转热线</span>
         </div>
@@ -26,8 +32,8 @@
       </div>
     </section>
 
-    <!-- 服务入口 -->
-    <section class="feature-grid">
+    <!-- 服务入口（登录后可见） -->
+    <section v-if="auth.isLoggedIn" class="feature-grid">
       <router-link to="/forum" class="feature-card mhop-card">
         <span class="feature-icon" style="background: #e7f3f1; color: #2f8f83"><el-icon :size="26"><ChatLineSquare /></el-icon></span>
         <h3>互助论坛</h3>
@@ -45,8 +51,8 @@
       </div>
     </section>
 
-    <!-- 最新倾诉 -->
-    <section style="margin-top: 26px">
+    <!-- 最新倾诉（登录后可见） -->
+    <section v-if="auth.isLoggedIn" style="margin-top: 26px">
       <div class="section-head">
         <h2><el-icon><ChatDotSquare /></el-icon> 最新倾诉</h2>
         <router-link to="/forum" class="text-sub">进入论坛 →</router-link>
@@ -79,7 +85,9 @@ import { ElMessage } from 'element-plus'
 import http from '../../api'
 import { fromNow } from '../../utils/format'
 import { boardOf } from '../../utils/boards'
+import { useAuthStore } from '../../stores/auth'
 
+const auth = useAuthStore()
 const posts = ref([])
 const loading = ref(false)
 
@@ -93,6 +101,7 @@ function chipStyle(slug) {
 }
 
 onMounted(async () => {
+  if (!auth.isLoggedIn) return
   loading.value = true
   try {
     const data = await http.get('/forum/posts', { params: { page: 1, size: 5 } })

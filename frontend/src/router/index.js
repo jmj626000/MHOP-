@@ -7,9 +7,9 @@ const routes = [
     component: () => import('../layouts/UserLayout.vue'),
     children: [
       { path: '', name: 'home', component: () => import('../views/user/HomeView.vue') },
-      { path: 'forum', name: 'forum', component: () => import('../views/user/ForumView.vue') },
-      { path: 'forum/:id', name: 'post-detail', component: () => import('../views/user/PostDetailView.vue') },
-      { path: 'assessment', name: 'assessment', component: () => import('../views/user/AssessmentView.vue') },
+      { path: 'forum', name: 'forum', component: () => import('../views/user/ForumView.vue'), meta: { requiresAuth: true, guestRedirect: 'home' } },
+      { path: 'forum/:id', name: 'post-detail', component: () => import('../views/user/PostDetailView.vue'), meta: { requiresAuth: true, guestRedirect: 'home' } },
+      { path: 'assessment', name: 'assessment', component: () => import('../views/user/AssessmentView.vue'), meta: { requiresAuth: true, guestRedirect: 'home' } },
       { path: 'login', name: 'login', component: () => import('../views/user/LoginView.vue') },
       { path: 'register', name: 'register', component: () => import('../views/user/RegisterView.vue') },
       { path: 'profile', name: 'profile', component: () => import('../views/user/ProfileView.vue'), meta: { requiresAuth: true } },
@@ -45,7 +45,7 @@ router.beforeEach((to) => {
     if (!auth.isAdmin) return { name: 'admin-login' }
   }
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return { name: 'login' }
+    return { name: to.meta.guestRedirect || 'login' }
   }
   return true
 })

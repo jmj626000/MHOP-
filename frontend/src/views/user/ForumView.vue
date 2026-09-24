@@ -161,7 +161,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import http from '../../api'
 import { useAuthStore } from '../../stores/auth'
@@ -256,7 +256,28 @@ async function togglePostLike(p) {
   p.like_count = data.like_count
 }
 
-function openComposer() {
+async function ensureCanPost() {
+  if (!auth.isLoggedIn) {
+    ElMessage.warning('请先登录后再发帖')
+    router.push('/login')
+    return false
+  }
+  if (!auth.user?.phone) {
+    try {
+      await ElMessageBox.confirm('平台要求发帖前绑定手机号（仅用于内容追责，无需验证码），现在去绑定？', '发帖前请先绑定手机号', {
+        confirmButtonText: '去绑定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      router.push('/profile')
+    } catch { /* 用户取消 */ }
+    return false
+  }
+  return true
+}
+
+async function openComposer() {
+  if (!await ensureCanPost()) return
   form.value = { board: board.value || 'mood', content: '', is_anonymous: true, images: [] }
   composerVisible.value = true
 }

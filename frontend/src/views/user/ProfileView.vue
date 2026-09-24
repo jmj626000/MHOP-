@@ -19,6 +19,17 @@
             <el-form-item label="邮箱">
               <el-input :model-value="email || '未绑定'" disabled />
             </el-form-item>
+            <el-form-item label="手机号">
+              <div v-if="!phoneEditing" class="phone-row">
+                <el-input :model-value="phone ? maskPhone(phone) : '未绑定（发帖前必须绑定）'" disabled />
+                <el-button type="primary" link @click="startEditPhone">{{ phone ? '换绑' : '绑定' }}</el-button>
+              </div>
+              <div v-else class="phone-row">
+                <el-input v-model="phoneInput" placeholder="请输入 11 位手机号" maxlength="11" />
+                <el-button type="primary" :loading="phoneSaving" @click="savePhone">保存</el-button>
+                <el-button @click="cancelEditPhone">取消</el-button>
+              </div>
+            </el-form-item>
             <el-form-item label="角色">
               <el-tag :type="isAdmin ? 'danger' : 'info'">{{ isAdmin ? '管理员' : '普通用户' }}</el-tag>
             </el-form-item>
@@ -48,6 +59,10 @@ const auth = useAuthStore()
 const form = ref({ username: '' })
 const avatarUrl = ref('')
 const email = ref('')
+const phone = ref('')
+const phoneEditing = ref(false)
+const phoneInput = ref('')
+const phoneSaving = ref(false)
 const createdAt = ref('')
 const saving = ref(false)
 const avatarInput = ref(null)
@@ -58,11 +73,42 @@ onMounted(async () => {
   form.value.username = auth.user?.username || ''
   avatarUrl.value = auth.user?.avatar || ''
   email.value = auth.user?.email || ''
+  phone.value = auth.user?.phone || ''
   createdAt.value = auth.user?.created_at ? new Date(auth.user.created_at).toLocaleString('zh-CN') : ''
   try {
     stats.value = await http.get('/forum/stats')
   } catch { /* ignore */ }
 })
+
+function maskPhone(p) {
+  return p.length === 11 ? `${p.slice(0, 3)}****${p.slice(7)}` : p
+}
+function startEditPhone() {
+  phoneInput.value = phone.value || ''
+  phoneEditing.value = true
+}
+function cancelEditPhone() {
+  phoneEditing.value = false
+  phoneInput.value = ''
+}
+async function savePhone() {
+  const p = phoneInput.value.trim()
+  if (!/^1[3-9]\d{9}$/.test(p)) {
+    ElMessage.warning('请输入正确的 11 位手机号')
+    return
+  }
+  phoneSaving.value = true
+  try {
+    const updated = await http.put('/auth/me/phone', { phone: p })
+    phone.value = updated.phone || ''
+    auth.user = { ...(auth.user || {}), phone: updated.phone || '' }
+    localStorage.setItem('mhop_user', JSON.stringify(auth.user))
+    phoneEditing.value = false
+    ElMessage.success('手机号已绑定')
+  } finally {
+    phoneSaving.value = false
+  }
+}
 
 function pickAvatar() {
   avatarInput.value?.click()
@@ -164,6 +210,15 @@ async function save() {
 .info-section {
   flex: 1;
   min-width: 0;
+}
+.phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.phone-row .el-input {
+  flex: 1;
 }
 .my-stats {
   display: flex;

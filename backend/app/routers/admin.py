@@ -45,6 +45,16 @@ def stats(db: Session = Depends(get_db)):
     }
 
 
+def _real_author(db: Session, user_id: int | None) -> tuple[str | None, str | None]:
+    """后台视角：匿名帖也要返回真实作者与手机号（历史匿名帖 user_id 已丢失则为 None）。"""
+    if not user_id:
+        return None, None
+    u = db.get(User, user_id)
+    if not u:
+        return "未知用户", None
+    return u.username, (u.phone or None)
+
+
 @router.get("/posts")
 def list_posts(status: int | None = None, db: Session = Depends(get_db)):
     stmt = select(Post).order_by(Post.created_at.desc())
@@ -52,10 +62,7 @@ def list_posts(status: int | None = None, db: Session = Depends(get_db)):
         stmt = stmt.where(Post.status == status)
     rows = []
     for p in db.scalars(stmt.limit(200)).all():
-        author = None
-        if not p.is_anonymous and p.user_id:
-            u = db.get(User, p.user_id)
-            author = u.username if u else None
+        author, author_phone = _real_author(db, p.user_id)
         rows.append(
             {
                 "id": p.id,
@@ -65,6 +72,7 @@ def list_posts(status: int | None = None, db: Session = Depends(get_db)):
                 "crisis": p.crisis,
                 "is_anonymous": p.is_anonymous,
                 "author": author,
+                "author_phone": author_phone,
                 "review_note": p.review_note,
                 "reply_count": len(p.replies),
                 "created_at": _iso(p.created_at),
@@ -97,10 +105,7 @@ def list_replies(status: int | None = None, db: Session = Depends(get_db)):
     rows = []
     for r in db.scalars(stmt.limit(300)).all():
         post = db.get(Post, r.post_id)
-        author = None
-        if not r.is_anonymous and r.user_id:
-            u = db.get(User, r.user_id)
-            author = u.username if u else None
+        author, author_phone = _real_author(db, r.user_id)
         rows.append(
             {
                 "id": r.id,
@@ -112,6 +117,7 @@ def list_replies(status: int | None = None, db: Session = Depends(get_db)):
                 "crisis": r.crisis,
                 "is_anonymous": r.is_anonymous,
                 "author": author,
+                "author_phone": author_phone,
                 "review_note": r.review_note,
                 "recalled": bool(r.recalled),
                 "recall_reason": r.recall_reason or "",

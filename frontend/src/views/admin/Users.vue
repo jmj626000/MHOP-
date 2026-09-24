@@ -13,6 +13,9 @@
         <el-table-column label="邮箱" min-width="180">
           <template #default="{ row }">{{ row.email || '—' }}</template>
         </el-table-column>
+        <el-table-column label="手机号" min-width="130">
+          <template #default="{ row }">{{ row.phone || '—' }}</template>
+        </el-table-column>
         <el-table-column label="角色" min-width="120">
           <template #default="{ row }">
             <el-tag :type="row.role === 'admin' ? 'danger' : 'info'" effect="plain" size="small">

@@ -34,6 +34,7 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str | None = None
+    phone: str | None = None
     role: str
     status: str
     avatar: str = ""
@@ -41,6 +42,10 @@ class UserOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PhoneBindIn(BaseModel):
+    phone: str = Field(min_length=11, max_length=11, pattern=r"^1[3-9]\d{9}$")
 
 
 class ProfileUpdateIn(BaseModel):

@@ -37,6 +37,8 @@ def migrate_schema() -> None:
             alters.append("ALTER TABLE users ADD COLUMN avatar VARCHAR(255) NOT NULL DEFAULT ''")
         if "badge" not in user_columns:
             alters.append("ALTER TABLE users ADD COLUMN badge VARCHAR(64) NOT NULL DEFAULT ''")
+        if "phone" not in user_columns:
+            alters.append("ALTER TABLE users ADD COLUMN phone VARCHAR(20)")
     if "posts" in inspector.get_table_names():
         post_columns = {c["name"] for c in inspector.get_columns("posts")}
         if "images" not in post_columns:

@@ -14,6 +14,7 @@ from ..schemas import (
     EmailCodeIn,
     EmailLoginIn,
     LoginIn,
+    PhoneBindIn,
     ProfileUpdateIn,
     RegisterIn,
     TokenOut,
@@ -134,10 +135,27 @@ def update_profile(
     return user
 
 
+@router.put("/me/phone", response_model=UserOut)
+def bind_phone(
+    body: PhoneBindIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """绑定/更换手机号（仅校验格式与唯一性，不发短信验证码）。"""
+    phone = body.phone.strip()
+    existing = db.scalar(select(User).where(User.phone == phone, User.id != user.id))
+    if existing:
+        raise HTTPException(status_code=400, detail="该手机号已被其他账号绑定")
+    user.phone = phone
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @router.get("/users/{user_id}", response_model=UserOut)
 def get_user_public(user_id: int, db: Session = Depends(get_db)):
-    """查看其他用户的公开资料。"""
+    """查看其他用户的公开资料（手机号仅本人与后台可见，此处脱敏）。"""
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
-    return user
+    return UserOut.model_validate(user).model_copy(update={"phone": None})

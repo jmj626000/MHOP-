@@ -318,6 +318,17 @@ async function submit() {
     router.push('/login')
     return
   }
+  if (!auth.user?.phone) {
+    try {
+      await ElMessageBox.confirm('回复前需要先绑定手机号（仅用于内容追责，无需验证码），现在去绑定？', '回复前请先绑定手机号', {
+        confirmButtonText: '去绑定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      router.push('/profile')
+    } catch { /* 用户取消 */ }
+    return
+  }
   const content = draft.value.trim()
   if (!content) {
     ElMessage.warning('先写点回应吧')

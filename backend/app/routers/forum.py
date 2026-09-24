@@ -23,6 +23,13 @@ from ..schemas import (
 router = APIRouter(prefix="/api/forum", tags=["forum"])
 
 
+def get_phone_verified_user(current: User = Depends(get_current_user)) -> User:
+    """发帖/回复前要求已绑定手机号（手机号仅作后台追责凭证，不做短信验证）。"""
+    if not current.phone:
+        raise HTTPException(status_code=403, detail="发帖前请先在个人主页绑定手机号")
+    return current
+
+
 def _author_for(obj, db: Session) -> tuple[str, str, str]:
     """返回 (作者名, 头像URL, 标识)"""
     if getattr(obj, "is_ai", False):
@@ -236,7 +243,7 @@ def create_post(
     body: PostIn,
     background: BackgroundTasks,
     db: Session = Depends(get_db),
-    current: User = Depends(get_current_user),
+    current: User = Depends(get_phone_verified_user),
 ):
     content = body.content.strip()
     if not content:
@@ -245,7 +252,8 @@ def create_post(
         raise HTTPException(status_code=400, detail="请选择板块")
     crisis = detect_crisis(content)
     post = Post(
-        user_id=current.id if not body.is_anonymous else None,
+        # 匿名仅对前台脱敏；user_id 始终留存，供后台审核与追责
+        user_id=current.id,
         is_anonymous=body.is_anonymous,
         content=content,
         board=body.board,
@@ -294,7 +302,7 @@ def create_reply(
     post_id: int,
     body: ReplyIn,
     db: Session = Depends(get_db),
-    current: User = Depends(get_current_user),
+    current: User = Depends(get_phone_verified_user),
 ):
     post = db.get(Post, post_id)
     if not post or post.status == 2:
@@ -307,7 +315,8 @@ def create_reply(
     words = hit_sensitive(content)
     reply = Reply(
         post_id=post_id,
-        user_id=current.id if not body.is_anonymous else None,
+        # 匿名仅对前台脱敏；user_id 始终留存，供后台审核与追责
+        user_id=current.id,
         is_anonymous=body.is_anonymous,
         content=content,
         images=json.dumps(body.images) if body.images else "",

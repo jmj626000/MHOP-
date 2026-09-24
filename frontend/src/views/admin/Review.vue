@@ -24,8 +24,8 @@
               <div style="margin-top: 6px">
                 <span class="board-chip" :style="chipStyle(row.board)">{{ boardOf(row.board).name }}</span>
                 <el-tag v-if="row.crisis" size="small" type="danger" effect="light" style="margin-left: 4px">危机信号</el-tag>
-                <el-tag size="small" :type="row.is_anonymous ? 'info' : 'success'" effect="plain" style="margin-left: 4px">
-                  {{ row.is_anonymous ? '匿名' : row.author || '实名' }}
+                <el-tag size="small" :type="row.is_anonymous ? 'warning' : 'success'" effect="plain" style="margin-left: 4px">
+                  {{ authorTag(row) }}
                 </el-tag>
                 <el-tag v-if="row.review_note" size="small" type="info" effect="plain" style="margin-left: 4px">
                   备注：{{ row.review_note }}
@@ -86,6 +86,9 @@
               <p class="cell-content">{{ row.content }}</p>
               <div style="margin-top: 6px">
                 <el-tag v-if="row.is_ai" size="small" type="success">AI 回复</el-tag>
+                <el-tag v-else size="small" :type="row.is_anonymous ? 'warning' : 'success'" effect="plain" style="margin-left: 4px">
+                  {{ authorTag(row) }}
+                </el-tag>
                 <el-tag v-if="row.recalled" size="small" type="info" effect="dark" style="margin-left: 4px">已撤回</el-tag>
                 <el-tag v-if="row.crisis" size="small" type="danger" effect="light" style="margin-left: 4px">危机信号</el-tag>
                 <el-tag v-if="row.recall_reason" size="small" type="warning" effect="plain" style="margin-left: 4px">
@@ -145,6 +148,15 @@ const replies = ref([])
 const loading = ref(false)
 const pendingCount = reactive({ posts: 0, replies: 0 })
 
+function authorTag(row) {
+  if (row.is_ai) return 'AI 回复'
+  if (!row.is_anonymous) return row.author || '实名用户'
+  // 匿名帖对前台匿名，后台展示真实作者与绑定手机号
+  if (row.author) {
+    return `匿名·实名：${row.author}${row.author_phone ? ' / ' + row.author_phone : ''}`
+  }
+  return '匿名（历史记录不可追溯）'
+}
 function postStatusType(s) {
   return ['warning', 'success', 'danger'][s] || 'info'
 }

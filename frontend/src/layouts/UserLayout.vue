@@ -11,8 +11,8 @@
         </router-link>
         <nav class="nav-links">
           <router-link to="/">首页</router-link>
-          <router-link to="/forum">互助论坛</router-link>
-          <router-link to="/assessment">AI 心理评估</router-link>
+          <router-link v-if="auth.isLoggedIn" to="/forum">互助论坛</router-link>
+          <router-link v-if="auth.isLoggedIn" to="/assessment">AI 心理评估</router-link>
         </nav>
         <div class="nav-right">
           <el-tag type="success" effect="light" round class="online-tag">
@@ -66,8 +66,8 @@
       </div>
       <nav class="drawer-links" @click="drawer = false">
         <router-link to="/"><el-icon><HomeFilled /></el-icon> 首页</router-link>
-        <router-link to="/forum"><el-icon><ChatLineSquare /></el-icon> 互助论坛</router-link>
-        <router-link to="/assessment"><el-icon><DataAnalysis /></el-icon> AI 心理评估</router-link>
+        <router-link v-if="auth.isLoggedIn" to="/forum"><el-icon><ChatLineSquare /></el-icon> 互助论坛</router-link>
+        <router-link v-if="auth.isLoggedIn" to="/assessment"><el-icon><DataAnalysis /></el-icon> AI 心理评估</router-link>
         <router-link v-if="auth.isLoggedIn" to="/profile"><el-icon><User /></el-icon> 个人主页</router-link>
       </nav>
       <div class="drawer-actions">

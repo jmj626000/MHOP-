@@ -58,9 +58,18 @@ if os.path.isdir(_static_dir):
             if candidate.startswith(_upload_dir) and os.path.isfile(candidate):
                 return FileResponse(candidate)
             raise HTTPException(status_code=404)
-        # 真实静态文件（favicon、hashed assets 等）
+        # 真实静态文件（favicon、hashed assets 等，带文件指纹可放心缓存）
         candidate = os.path.normpath(os.path.join(_static_dir, full_path))
         if full_path and candidate.startswith(_static_dir) and os.path.isfile(candidate):
+            if full_path.startswith("assets/"):
+                return FileResponse(
+                    candidate,
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"},
+                )
             return FileResponse(candidate)
-        # 其余路径一律回退 index.html，交给前端路由（/forum/123 等）
-        return FileResponse(os.path.join(_static_dir, "index.html"))
+        # 其余路径一律回退 index.html，交给前端路由（/forum/123 等）。
+        # index.html 禁止启发式缓存：否则新版本部署后老用户可能继续加载旧 chunk。
+        return FileResponse(
+            os.path.join(_static_dir, "index.html"),
+            headers={"Cache-Control": "no-cache, must-revalidate"},
+        )

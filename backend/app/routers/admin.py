@@ -257,15 +257,28 @@ def reset_user_password(
 
 @router.get("/ai-logs")
 def list_ai_logs(db: Session = Depends(get_db)):
-    rows = db.scalars(select(AiLog).order_by(AiLog.created_at.desc()).limit(200)).all()
-    return [
-        {
-            "id": r.id,
-            "module": r.module,
-            "engine": r.engine,
-            "prompt": r.prompt[:300],
-            "response": r.response[:600],
-            "created_at": _iso(r.created_at),
-        }
-        for r in rows
-    ]
+    # 左连接 replies：forum 日志需带出回复的撤回状态，便于在本页直接撤回/恢复
+    rows = db.execute(
+        select(AiLog, Reply)
+        .outerjoin(Reply, AiLog.reply_id == Reply.id)
+        .order_by(AiLog.created_at.desc())
+        .limit(200)
+    ).all()
+    out = []
+    for log, reply in rows:
+        out.append(
+            {
+                "id": log.id,
+                "module": log.module,
+                "engine": log.engine,
+                "prompt": log.prompt[:300],
+                "response": log.response[:600],
+                "created_at": _iso(log.created_at),
+                "reply_id": reply.id if reply else None,
+                "post_id": reply.post_id if reply else None,
+                "reply_status": reply.status if reply else None,
+                "recalled": bool(reply.recalled) if reply else False,
+                "recall_reason": (reply.recall_reason or "") if reply else "",
+            }
+        )
+    return out

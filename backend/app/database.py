@@ -45,6 +45,10 @@ def migrate_schema() -> None:
         reply_columns = {c["name"] for c in inspector.get_columns("replies")}
         if "images" not in reply_columns:
             alters.append("ALTER TABLE replies ADD COLUMN images TEXT DEFAULT ''")
+    if "ai_logs" in inspector.get_table_names():
+        ai_log_columns = {c["name"] for c in inspector.get_columns("ai_logs")}
+        if "reply_id" not in ai_log_columns:
+            alters.append("ALTER TABLE ai_logs ADD COLUMN reply_id INTEGER")
     if alters:
         with engine.begin() as conn:
             for sql in alters:

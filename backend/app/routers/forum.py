@@ -138,19 +138,26 @@ async def _generate_ai_reply(post_id: int, content: str, crisis: bool) -> None:
     text, engine = await ai.forum_reply(content, crisis)
     db = SessionLocal()
     try:
-        db.add(
-            Reply(
-                post_id=post_id,
-                user_id=None,
-                is_anonymous=True,
-                content=text,
-                status=1,
-                is_ai=True,
-                crisis=crisis,
-            )
+        reply = Reply(
+            post_id=post_id,
+            user_id=None,
+            is_anonymous=True,
+            content=text,
+            status=1,
+            is_ai=True,
+            crisis=crisis,
         )
+        db.add(reply)
+        db.flush()  # 取 reply.id 关联交互日志，供后台日志页撤回/恢复
         db.add(
-            AiLog(user_id=None, module="forum", prompt=content[:2000], response=text[:4000], engine=engine)
+            AiLog(
+                user_id=None,
+                module="forum",
+                reply_id=reply.id,
+                prompt=content[:2000],
+                response=text[:4000],
+                engine=engine,
+            )
         )
         db.commit()
     finally:

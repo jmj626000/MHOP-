@@ -112,6 +112,8 @@ class AiLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     session_id = Column(String(64), default="", index=True)
     module = Column(String(32), nullable=False)  # forum / assessment
+    # forum 模块关联生成的 AI 回复，供管理后台日志页直接撤回/恢复；历史数据为 NULL
+    reply_id = Column(Integer, ForeignKey("replies.id"), nullable=True, index=True)
     prompt = Column(Text, default="")
     response = Column(Text, default="")
     engine = Column(String(32), default="local")  # llm / local

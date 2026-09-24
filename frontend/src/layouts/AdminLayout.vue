@@ -10,30 +10,30 @@
       </div>
       <el-menu :default-active="route.path" router background-color="transparent" text-color="#cfe4e0"
         active-text-color="#ffffff">
-        <el-menu-item index="/admin/dashboard">
-          <el-icon><DataBoard /></el-icon><span>数据看板</span>
-        </el-menu-item>
-        <el-menu-item index="/admin/review">
-          <el-icon><Checked /></el-icon><span>内容审核</span>
-        </el-menu-item>
-        <el-menu-item index="/admin/users">
-          <el-icon><UserFilled /></el-icon><span>用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/admin/ai-logs">
-          <el-icon><MagicStick /></el-icon><span>AI 交互日志</span>
+        <el-menu-item v-for="item in menus" :key="item.path" :index="item.path">
+          <el-icon><component :is="item.icon" /></el-icon><span>{{ item.name }}</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
 
     <el-container>
       <el-header class="admin-header">
-        <div>
+        <div class="header-left">
+          <span class="admin-burger" role="button" aria-label="打开菜单" @click="drawer = true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round">
+              <line x1="3.5" y1="6.5" x2="20.5" y2="6.5" />
+              <line x1="3.5" y1="12" x2="20.5" y2="12" />
+              <line x1="3.5" y1="17.5" x2="20.5" y2="17.5" />
+            </svg>
+          </span>
+          <strong class="brand-mini">心光 MHOP 后台</strong>
           <router-link to="/" class="back-site"><el-icon><Monitor /></el-icon> 访问前台</router-link>
         </div>
         <el-dropdown @command="onCommand">
           <span class="user-trigger">
             <el-icon><Avatar /></el-icon>
-            {{ auth.displayName }}（管理员）
+            {{ auth.displayName }}<span class="admin-role">（管理员）</span>
             <el-icon><ArrowDown /></el-icon>
           </span>
           <template #dropdown>
@@ -48,16 +48,49 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 移动端抽屉菜单（桌面端隐藏侧栏，不显示汉堡） -->
+    <el-drawer v-model="drawer" direction="ltr" size="72%" :with-header="false" class="admin-drawer">
+      <div class="drawer-brand">
+        <el-icon :size="22"><Sunny /></el-icon>
+        <div>
+          <strong>心光 MHOP</strong>
+          <small>运营管理后台</small>
+        </div>
+      </div>
+      <nav class="drawer-nav">
+        <a v-for="item in menus" :key="item.path"
+          :class="['drawer-nav-item', { active: route.path === item.path }]"
+          @click="go(item.path)">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.name }}</span>
+        </a>
+      </nav>
+    </el-drawer>
   </el-container>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const drawer = ref(false)
+
+const menus = [
+  { path: '/admin/dashboard', name: '数据看板', icon: 'DataBoard' },
+  { path: '/admin/review', name: '内容审核', icon: 'Checked' },
+  { path: '/admin/users', name: '用户管理', icon: 'UserFilled' },
+  { path: '/admin/ai-logs', name: 'AI 交互日志', icon: 'MagicStick' },
+]
+
+function go(path) {
+  drawer.value = false
+  router.push(path)
+}
 
 function onCommand(cmd) {
   if (cmd === 'site' || cmd === 'logout') {
@@ -110,6 +143,25 @@ function onCommand(cmd) {
   align-items: center;
   justify-content: space-between;
 }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-mini {
+  display: none;
+  font-size: 15.5px;
+  color: var(--mhop-text);
+  white-space: nowrap;
+}
+.admin-burger {
+  display: none;
+  color: var(--mhop-text);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+}
 .back-site {
   color: var(--mhop-text-sub);
   font-size: 13.5px;
@@ -124,51 +176,87 @@ function onCommand(cmd) {
   cursor: pointer;
   outline: none;
   font-size: 14px;
+  white-space: nowrap;
 }
 .admin-main {
   background: #f4f2ed;
   padding: 22px;
 }
 
-/* 移动端：侧边栏变为顶部横向滚动菜单 */
+/* 移动端：侧栏收进抽屉，顶栏放汉堡 */
 @media (max-width: 760px) {
   .admin-shell {
     height: auto;
     min-height: 100vh;
-    flex-direction: column;
   }
   .admin-aside {
-    width: 100% !important;
-    height: auto !important;
-  }
-  .logo {
-    padding: 12px 14px;
-  }
-  .logo small {
     display: none;
   }
-  .admin-aside :deep(.el-menu) {
-    display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
+  .admin-burger {
+    display: inline-flex;
   }
-  .admin-aside :deep(.el-menu::-webkit-scrollbar) {
+  .brand-mini {
+    display: block;
+  }
+  .back-site {
     display: none;
   }
-  .admin-aside :deep(.el-menu-item) {
-    flex: none;
-    margin: 4px 6px;
-    white-space: nowrap;
+  .admin-role {
+    display: none;
   }
   .admin-header {
-    height: auto !important;
-    min-height: 50px;
-    padding: 8px 14px;
-    gap: 10px;
-    flex-wrap: wrap;
+    height: 54px !important;
+    padding: 0 12px;
   }
   .admin-main {
     padding: 14px 10px;
   }
+}
+</style>
+
+<!-- 抽屉被 teleport 到 body，scoped 样式选不中，使用全局样式块 -->
+<style>
+.admin-drawer.el-drawer {
+  background: linear-gradient(180deg, #206b62 0%, #18514b 100%);
+}
+.admin-drawer .el-drawer__body {
+  padding: 0;
+  overflow-y: auto;
+}
+.admin-drawer .drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  padding: 22px 18px 14px;
+}
+.admin-drawer .drawer-brand strong {
+  display: block;
+  font-size: 16px;
+}
+.admin-drawer .drawer-brand small {
+  color: #a9cfc9;
+  font-size: 11.5px;
+}
+.admin-drawer .drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+}
+.admin-drawer .drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 12px;
+  margin: 3px 0;
+  border-radius: 8px;
+  color: #cfe4e0;
+  font-size: 15.5px;
+  cursor: pointer;
+}
+.admin-drawer .drawer-nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-weight: 600;
 }
 </style>

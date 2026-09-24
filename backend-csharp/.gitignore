@@ -1,0 +1,29 @@
+# .NET 构建产物
+bin/
+obj/
+publish-linux/
+publish-linux.tar.gz
+
+# 运行时数据
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# 用户上传与静态资源
+Mhop.Api/uploads/
+Mhop.Api/static/
+
+# 环境变量与密钥
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE / 日志
+.vs/
+.idea/
+*.user
+*.log

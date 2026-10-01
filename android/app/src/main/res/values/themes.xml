@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 使用框架自带 Material Light 主题，不引入第三方依赖；保留状态栏，不全屏 -->
+    <style name="Theme.Mhop" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorAccent">@color/mhop_teal</item>
+        <item name="android:statusBarColor">@color/mhop_teal_dark</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>

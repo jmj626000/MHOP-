@@ -1,0 +1,13 @@
+# 本机 SDK 路径，不入库
+local.properties
+
+# 构建产物
+.gradle/
+build/
+app/build/
+captures/
+
+# IDE
+.idea/
+*.iml
+.DS_Store

@@ -48,7 +48,7 @@ jobs:
   build-release-apk:
     name: Release APK
     runs-on: ubuntu-latest
-    if: ${{ secrets.MHOP_RELEASE_KEYSTORE_BASE64 && secrets.MHOP_RELEASE_STORE_PASSWORD && secrets.MHOP_RELEASE_KEY_ALIAS && secrets.MHOP_RELEASE_KEY_PASSWORD }}
+    # NOTE: if 条件暂时去掉，先验证 YAML 结构
     steps:
       - uses: actions/checkout@v4
 

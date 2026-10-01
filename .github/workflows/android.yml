@@ -57,8 +57,13 @@ jobs:
     name: Release APK
     runs-on: ubuntu-latest
     # 4 个 secrets 全部配置后才跑；缺任何一个都跳过（不会炸 build，方便逐步配置）
-    # secrets 未配置时返回空字符串（falsy），配置后返回非空（truthy）
-    if: 'always() && secrets.MHOP_RELEASE_KEYSTORE_BASE64 && secrets.MHOP_RELEASE_STORE_PASSWORD && secrets.MHOP_RELEASE_KEY_ALIAS && secrets.MHOP_RELEASE_KEY_PASSWORD'
+    # 用 | 多行标量避开单引号嵌套坑
+    if: |
+      always() &&
+      secrets.MHOP_RELEASE_KEYSTORE_BASE64 &&
+      secrets.MHOP_RELEASE_STORE_PASSWORD &&
+      secrets.MHOP_RELEASE_KEY_ALIAS &&
+      secrets.MHOP_RELEASE_KEY_PASSWORD
     steps:
       - uses: actions/checkout@v4
 

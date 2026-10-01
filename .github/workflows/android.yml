@@ -75,24 +75,21 @@ jobs:
             -storepass "${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}" \
             -alias "${{ secrets.MHOP_RELEASE_KEY_ALIAS }}" -v | head -15
 
-      - name: Debug - gradle sees signing props?
-        working-directory: android
-        env:
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_STORE_FILE: /tmp/mhop-release.keystore
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_STORE_PASSWORD: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_KEY_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_KEY_PASSWORD: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
-        run: |
-          gradle properties --no-daemon | grep MHOP_RELEASE || echo 'NO MHOP PROPS FOUND!'
-
       - name: Build release APK
         working-directory: android
         env:
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_STORE_FILE: /tmp/mhop-release.keystore
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_STORE_PASSWORD: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_KEY_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_MHOP_RELEASE_KEY_PASSWORD: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+          MHOP_STOREPW: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
+          MHOP_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
+          MHOP_KEYPW: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
+        run: |
+          # Write project-level gradle.properties (Gradle auto-loads it)
+          cat > gradle.properties <<GRADLE_EOF
+          MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
+          MHOP_RELEASE_STORE_PASSWORD=$ENV{MHOP_STOREPW}
+          MHOP_RELEASE_KEY_ALIAS=$ENV{MHOP_ALIAS}
+          MHOP_RELEASE_KEY_PASSWORD=$ENV{MHOP_KEYPW}
+          GRADLE_EOF
+          gradle :app:assembleRelease --no-daemon --stacktrace
 
       - name: Rename + verify
         working-directory: android

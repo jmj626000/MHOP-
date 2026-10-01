@@ -7,15 +7,15 @@ android {
     compileSdk 35
 
     signingConfigs {
-        // Release 签名：优先读 -P 参数 / ORG_GRADLE_PROJECT_ 环境变量 / project gradle.properties
-        // Groovy 属性访问语法 `project.XXX` 会被 Gradle 属性解析器解析（含环境变量映射）
+        // Release 签名：CI 在 android/gradle.properties 写入这 4 个属性
+        // Gradle 自动加载 project gradle.properties，findProperty() 能读到
         release {
-            def sf = project.MHOP_RELEASE_STORE_FILE
+            def sf = project.findProperty('MHOP_RELEASE_STORE_FILE')
             if (sf) {
                 storeFile file(sf)
-                storePassword project.MHOP_RELEASE_STORE_PASSWORD
-                keyAlias project.MHOP_RELEASE_KEY_ALIAS
-                keyPassword project.MHOP_RELEASE_KEY_PASSWORD
+                storePassword project.findProperty('MHOP_RELEASE_STORE_PASSWORD')
+                keyAlias project.findProperty('MHOP_RELEASE_KEY_ALIAS')
+                keyPassword project.findProperty('MHOP_RELEASE_KEY_PASSWORD')
             }
         }
     }

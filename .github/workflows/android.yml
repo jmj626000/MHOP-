@@ -82,16 +82,16 @@ jobs:
           MHOP_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
           MHOP_KEYPW: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
         run: |
+          # Runner 是 Linux/bash，环境变量用 ${VAR} 语法（不是 PowerShell 的 $ENV{VAR}）
           PROPS="MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
-          MHOP_RELEASE_STORE_PASSWORD=$ENV{MHOP_STOREPW}
-          MHOP_RELEASE_KEY_ALIAS=$ENV{MHOP_ALIAS}
-          MHOP_RELEASE_KEY_PASSWORD=$ENV{MHOP_KEYPW}"
-          # Write both root project and app module gradle.properties
+          MHOP_RELEASE_STORE_PASSWORD=${MHOP_STOREPW}
+          MHOP_RELEASE_KEY_ALIAS=${MHOP_ALIAS}
+          MHOP_RELEASE_KEY_PASSWORD=${MHOP_KEYPW}"
           echo "$PROPS" > gradle.properties
-          mkdir -p app && echo "$PROPS" > app/gradle.properties
-          echo '[gradle.properties content]'
+          echo "$PROPS" > app/gradle.properties
+          echo '[gradle.properties]'
           cat gradle.properties | sed 's/PASSWORD=.*/PASSWORD=***/'
-          gradle :app:assembleRelease --no-daemon --stacktrace --info 2>&1 | tail -100
+          gradle :app:assembleRelease --no-daemon --stacktrace
 
       - name: Rename + verify
         working-directory: android

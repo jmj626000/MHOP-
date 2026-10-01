@@ -82,14 +82,16 @@ jobs:
           MHOP_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
           MHOP_KEYPW: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
         run: |
-          # Write project-level gradle.properties (Gradle auto-loads it)
-          cat > gradle.properties <<GRADLE_EOF
-          MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
+          PROPS="MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
           MHOP_RELEASE_STORE_PASSWORD=$ENV{MHOP_STOREPW}
           MHOP_RELEASE_KEY_ALIAS=$ENV{MHOP_ALIAS}
-          MHOP_RELEASE_KEY_PASSWORD=$ENV{MHOP_KEYPW}
-          GRADLE_EOF
-          gradle :app:assembleRelease --no-daemon --stacktrace
+          MHOP_RELEASE_KEY_PASSWORD=$ENV{MHOP_KEYPW}"
+          # Write both root project and app module gradle.properties
+          echo "$PROPS" > gradle.properties
+          mkdir -p app && echo "$PROPS" > app/gradle.properties
+          echo '[gradle.properties content]'
+          cat gradle.properties | sed 's/PASSWORD=.*/PASSWORD=***/'
+          gradle :app:assembleRelease --no-daemon --stacktrace --info 2>&1 | tail -100
 
       - name: Rename + verify
         working-directory: android

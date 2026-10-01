@@ -68,26 +68,26 @@ jobs:
         working-directory: android
         run: |
           set -e
-          echo '[1/4] base64 decode keystore'
-          echo "${{ secrets.MHOP_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > /tmp/mhop-release.keystore
-          echo '[2/4] keystore file info'
+          base64 -d > /tmp/mhop-release.keystore <<< "${{ secrets.MHOP_RELEASE_KEYSTORE_BASE64 }}"
           ls -la /tmp/mhop-release.keystore
           file /tmp/mhop-release.keystore
-          echo '[3/4] write gradle.properties'
-          mkdir -p ~/.gradle
-          cat > ~/.gradle/gradle.properties <<EOF
-          MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
-          MHOP_RELEASE_STORE_PASSWORD=${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
-          MHOP_RELEASE_KEY_ALIAS=${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
-          MHOP_RELEASE_KEY_PASSWORD=${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
-          EOF
-          cat ~/.gradle/gradle.properties | sed 's/PASSWORD=.*/PASSWORD=***MASKED***/'
-          echo '[4/4] verify keystore readable'
-          keytool -list -keystore /tmp/mhop-release.keystore -storepass "${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}" -alias "${{ secrets.MHOP_RELEASE_KEY_ALIAS }}" -v | head -30
+          keytool -list -keystore /tmp/mhop-release.keystore \
+            -storepass "${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}" \
+            -alias "${{ secrets.MHOP_RELEASE_KEY_ALIAS }}" -v | head -15
 
       - name: Build release APK
         working-directory: android
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+        env:
+          SF: /tmp/mhop-release.keystore
+          SPW: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
+          KA: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
+          KPW: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
+        run: |
+          gradle :app:assembleRelease --no-daemon --stacktrace \
+            -PMHOP_RELEASE_STORE_FILE="$SF" \
+            -PMHOP_RELEASE_STORE_PASSWORD="$SPW" \
+            -PMHOP_RELEASE_KEY_ALIAS="$KA" \
+            -PMHOP_RELEASE_KEY_PASSWORD="$KPW"
 
       - name: Rename + verify
         working-directory: android

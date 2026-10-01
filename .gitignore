@@ -41,3 +41,7 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Android release signing material - NEVER commit
+keystore-v2-backup/
+*.keystore

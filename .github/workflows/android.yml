@@ -39,6 +39,12 @@ jobs:
         working-directory: android
         run: cp app/build/outputs/apk/debug/app-debug.apk MHOP-1.0.0-debug.apk
 
+      - name: 校验 APK 内容
+        working-directory: android
+        run: |
+          ls -l MHOP-1.0.0-debug.apk
+          unzip -l MHOP-1.0.0-debug.apk | grep -E 'classes.dex|AndroidManifest.xml|resources.arsc|res/'
+
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:

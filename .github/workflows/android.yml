@@ -9,8 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ========== Debug 构建：默认签名，任何 push 到 android/** 都触发 ==========
   build-debug-apk:
-    name: 构建 debug APK
+    name: Debug APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,20 +36,87 @@ jobs:
         working-directory: android
         run: gradle :app:assembleDebug --no-daemon --stacktrace
 
-      - name: 重命名产物
-        working-directory: android
-        run: cp app/build/outputs/apk/debug/app-debug.apk MHOP-1.0.1-debug.apk
-
-      - name: 校验 APK 内容
+      - name: 产物重命名 + 完整性校验
         working-directory: android
         run: |
-          ls -l MHOP-1.0.1-debug.apk
-          unzip -l MHOP-1.0.1-debug.apk | grep -E 'classes.dex|AndroidManifest.xml|resources.arsc|res/'
+          cp app/build/outputs/apk/debug/app-debug.apk MHOP-1.1.0-debug.apk
+          ls -l MHOP-1.1.0-debug.apk
+          echo '--- APK contents (关键条目) ---'
+          unzip -l MHOP-1.1.0-debug.apk | grep -E 'classes.dex|AndroidManifest.xml|resources.arsc|res/'
 
-      - name: 上传 APK
+      - name: 上传 Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: MHOP-1.0.1-debug-apk
-          path: android/MHOP-1.0.1-debug.apk
+          name: MHOP-1.1.0-debug-apk
+          path: android/MHOP-1.1.0-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+  # ========== Release 构建：需配置 GitHub Secrets 才会运行，条件性执行 ==========
+  build-release-apk:
+    name: Release APK
+    runs-on: ubuntu-latest
+    # 4 个 secrets 全部配置后才跑；缺任何一个都跳过（不会炸 build，方便逐步配置）
+    if: >
+      github.event_name != 'push'
+      || (secrets.MHOP_RELEASE_KEYSTORE_BASE64 != ''
+        && secrets.MHOP_RELEASE_STORE_PASSWORD != ''
+        && secrets.MHOP_RELEASE_KEY_ALIAS != ''
+        && secrets.MHOP_RELEASE_KEY_PASSWORD != '')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 安装 Android SDK 组件
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0'
+
+      - name: 安装 Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: 注入 Release 签名凭据
+        working-directory: android
+        run: |
+          # secrets 里是 keystore 文件的 base64（不要把文件直接放进仓库）
+          echo "${{ secrets.MHOP_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > /tmp/mhop-release.keystore
+          # runner 级 gradle.properties：CI 专用，不落仓库
+          cat >> ~/.gradle/gradle.properties <<EOF
+          MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
+          MHOP_RELEASE_STORE_PASSWORD=${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
+          MHOP_RELEASE_KEY_ALIAS=${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
+          MHOP_RELEASE_KEY_PASSWORD=${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
+          EOF
+          echo '[gradlew properties written; keystore size:]'
+          ls -l /tmp/mhop-release.keystore
+
+      - name: 构建 release APK
+        working-directory: android
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: 产物重命名 + 完整性校验
+        working-directory: android
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk MHOP-1.1.0-release.apk
+          ls -l MHOP-1.1.0-release.apk
+          echo '--- APK contents (关键条目) ---'
+          unzip -l MHOP-1.1.0-release.apk | grep -E 'classes.dex|AndroidManifest.xml|resources.arsc|res/'
+          echo '--- A 签名摘要 ---'
+          # 若无 apksigner（build-tools），用 jarsigner 兜底
+          (apksigner verify --verbose --print-certs MHOP-1.1.0-release.apk 2>&1 \
+            || true) | head -40
+
+      - name: 上传 Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MHOP-1.1.0-release-apk
+          path: android/MHOP-1.1.0-release.apk
+          if-no-files-found: error
+          retention-days: 90

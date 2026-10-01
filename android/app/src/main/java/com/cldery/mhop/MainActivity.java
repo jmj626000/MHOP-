@@ -19,15 +19,16 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 /**
- * 心光 MHOP 站点壳：一个被锁定在 https://mhop.cldery.com 的全屏 WebView。
- * - 仅允许同源（同 scheme/host）导航，任何站外链接一律拦截，不唤起外部浏览器；
+ * 心光 MHOP 站点壳：一个被锁定在 cldery.com 生态的全屏 WebView。
+ * - 允许 scheme=https，且 host 属于 *.cldery.com 子域（mhop 主站、auth 统一身份证、api 等）；
+ * - 站外域一律拦截，不唤起外部浏览器；
  * - 支持 H5 文件/图片选择上传；
  * - 物理返回键优先网页后退；
  * - 主框架加载失败显示原生重试页。
  */
 public class MainActivity extends Activity {
 
-    private static final String SITE_HOST = "mhop.cldery.com";
+    private static final String ALLOWED_TLD = "cldery.com";
     private static final String SITE_URL = "https://mhop.cldery.com/";
     private static final int FILE_CHOOSER_REQUEST = 51001;
 
@@ -125,11 +126,16 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 仅允许 https://mhop.cldery.com（大小写不敏感的 host 精确匹配），其余全部拦截。 */
+    /**
+     * 放行规则：scheme 必须 https，且 host 等于 *.cldery.com 的任意子域（大小写不敏感）。
+     * 例：mhop.cldery.com ✅ / auth.cldery.com ✅ / api.cldery.com ✅ / cldery.com 本身 ✅ / google.com ❌。
+     */
     private static boolean isSameSite(Uri uri) {
-        return uri != null
-                && "https".equals(uri.getScheme())
-                && SITE_HOST.equalsIgnoreCase(uri.getHost());
+        if (uri == null || !"https".equals(uri.getScheme())) return false;
+        String host = uri.getHost();
+        if (host == null) return false;
+        host = host.toLowerCase();
+        return host.equals(ALLOWED_TLD) || host.endsWith("." + ALLOWED_TLD);
     }
 
     private void loadSite() {

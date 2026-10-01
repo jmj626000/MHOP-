@@ -6,12 +6,26 @@ android {
     namespace 'com.cldery.mhop'
     compileSdk 35
 
+    signingConfigs {
+        // Release 签名从 project properties 读取（CI 在 runner gradle.properties 写入）。
+        // 本地未注入时 release 无签名 → assembleRelease 会报错（安全：不会生成未签名 APK）。
+        release {
+            def storeFileStr = project.findProperty('MHOP_RELEASE_STORE_FILE') as String
+            if (storeFileStr) {
+                storeFile file(storeFileStr)
+                storePassword project.findProperty('MHOP_RELEASE_STORE_PASSWORD') as String
+                keyAlias project.findProperty('MHOP_RELEASE_KEY_ALIAS') as String
+                keyPassword project.findProperty('MHOP_RELEASE_KEY_PASSWORD') as String
+            }
+        }
+    }
+
     defaultConfig {
         applicationId 'com.cldery.mhop'
         minSdk 26
         targetSdk 35
-        versionCode 2
-        versionName '1.0.1'
+        versionCode 3
+        versionName '1.1.0'
     }
 
     compileOptions {
@@ -21,11 +35,12 @@ android {
 
     buildTypes {
         debug {
-            // 使用默认 debug 签名，CI 可直接产出可安装 APK
+            // 默认 debug 签名，CI 可直接产出可安装 APK
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

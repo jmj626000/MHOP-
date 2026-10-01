@@ -7,15 +7,15 @@ android {
     compileSdk 35
 
     signingConfigs {
-        // Release 签名从 project properties 读取（CI 在 runner gradle.properties 写入）。
-        // 本地未注入时 release 无签名 → assembleRelease 会报错（安全：不会生成未签名 APK）。
+        // Release 签名：优先读 -P 参数 / ORG_GRADLE_PROJECT_ 环境变量 / project gradle.properties
+        // Groovy 属性访问语法 `project.XXX` 会被 Gradle 属性解析器解析（含环境变量映射）
         release {
-            def storeFileStr = project.findProperty('MHOP_RELEASE_STORE_FILE') as String
-            if (storeFileStr) {
-                storeFile file(storeFileStr)
-                storePassword project.findProperty('MHOP_RELEASE_STORE_PASSWORD') as String
-                keyAlias project.findProperty('MHOP_RELEASE_KEY_ALIAS') as String
-                keyPassword project.findProperty('MHOP_RELEASE_KEY_PASSWORD') as String
+            def sf = project.MHOP_RELEASE_STORE_FILE
+            if (sf) {
+                storeFile file(sf)
+                storePassword project.MHOP_RELEASE_STORE_PASSWORD
+                keyAlias project.MHOP_RELEASE_KEY_ALIAS
+                keyPassword project.MHOP_RELEASE_KEY_PASSWORD
             }
         }
     }

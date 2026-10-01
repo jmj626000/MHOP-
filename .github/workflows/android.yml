@@ -48,8 +48,6 @@ jobs:
   build-release-apk:
     name: Release APK
     runs-on: ubuntu-latest
-    # 只要主 keystore secret 存在就跑（四个 secrets 成对配置）
-    if: secrets.MHOP_RELEASE_KEYSTORE_BASE64 != ''
     steps:
       - uses: actions/checkout@v4
 

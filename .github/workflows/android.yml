@@ -56,14 +56,9 @@ jobs:
   build-release-apk:
     name: Release APK
     runs-on: ubuntu-latest
-    # 4 个 secrets 全部配置后才跑；缺任何一个都跳过（不会炸 build，方便逐步配置）
-    # 用 | 多行标量避开单引号嵌套坑
-    if: |
-      always() &&
-      secrets.MHOP_RELEASE_KEYSTORE_BASE64 &&
-      secrets.MHOP_RELEASE_STORE_PASSWORD &&
-      secrets.MHOP_RELEASE_KEY_ALIAS &&
-      secrets.MHOP_RELEASE_KEY_PASSWORD
+    # 4 个 secrets 全部配置后才跑；缺任何一个都跳过
+    # 全部放进 ${{ }} 里：GitHub Actions 的 if 字段，context 引用（secrets）必须在 ${{ }} 包裹内
+    if: '${{ always() && secrets.MHOP_RELEASE_KEYSTORE_BASE64 && secrets.MHOP_RELEASE_STORE_PASSWORD && secrets.MHOP_RELEASE_KEY_ALIAS && secrets.MHOP_RELEASE_KEY_PASSWORD }}'
     steps:
       - uses: actions/checkout@v4
 

@@ -67,30 +67,31 @@ jobs:
       - name: Inject release signing
         working-directory: android
         run: |
-          set -e
+          set -euo pipefail
           base64 -d > /tmp/mhop-release.keystore <<< "${{ secrets.MHOP_RELEASE_KEYSTORE_BASE64 }}"
           ls -la /tmp/mhop-release.keystore
           file /tmp/mhop-release.keystore
+          # 严格验证：不通过管道，keytool 失败则 step 立即红
+          echo "storepass length=${#MHOP_STOREPW}"
           keytool -list -keystore /tmp/mhop-release.keystore \
             -storepass "${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}" \
-            -alias "${{ secrets.MHOP_RELEASE_KEY_ALIAS }}" -v | head -15
+            -alias "${{ secrets.MHOP_RELEASE_KEY_ALIAS }}"
+        env:
+          MHOP_STOREPW: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
 
       - name: Build release APK
         working-directory: android
         env:
           MHOP_STOREPW: ${{ secrets.MHOP_RELEASE_STORE_PASSWORD }}
           MHOP_ALIAS: ${{ secrets.MHOP_RELEASE_KEY_ALIAS }}
-          MHOP_KEYPW: ${{ secrets.MHOP_RELEASE_KEY_PASSWORD }}
         run: |
-          # Runner 是 Linux/bash，环境变量用 ${VAR} 语法（不是 PowerShell 的 $ENV{VAR}）
-          PROPS="MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore
-          MHOP_RELEASE_STORE_PASSWORD=${MHOP_STOREPW}
-          MHOP_RELEASE_KEY_ALIAS=${MHOP_ALIAS}
-          MHOP_RELEASE_KEY_PASSWORD=${MHOP_KEYPW}"
-          echo "$PROPS" > gradle.properties
-          echo "$PROPS" > app/gradle.properties
-          echo '[gradle.properties]'
-          cat gradle.properties | sed 's/PASSWORD=.*/PASSWORD=***/'
+          set -euo pipefail
+          # gen-keystore 生成时 key_password 留空 = 与 store_password 相同
+          # 强制 keypass=storepass，排除 KEY_PASSWORD secret 填错的干扰
+          printf 'MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore\nMHOP_RELEASE_STORE_PASSWORD=%s\nMHOP_RELEASE_KEY_ALIAS=%s\nMHOP_RELEASE_KEY_PASSWORD=%s\n' "$MHOP_STOREPW" "$MHOP_ALIAS" "$MHOP_STOREPW" > gradle.properties
+          printf 'MHOP_RELEASE_STORE_FILE=/tmp/mhop-release.keystore\nMHOP_RELEASE_STORE_PASSWORD=%s\nMHOP_RELEASE_KEY_ALIAS=%s\nMHOP_RELEASE_KEY_PASSWORD=%s\n' "$MHOP_STOREPW" "$MHOP_ALIAS" "$MHOP_STOREPW" > app/gradle.properties
+          echo '[gradle.properties written, masked:]'
+          sed 's/PASSWORD=.*/PASSWORD=***/' gradle.properties
           gradle :app:assembleRelease --no-daemon --stacktrace
 
       - name: Rename + verify

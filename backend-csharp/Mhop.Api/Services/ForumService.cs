@@ -54,7 +54,7 @@ public sealed class ForumService
     private static (string Name, string Avatar, string Badge) AuthorFor(
         bool isAi, bool isAnonymous, int? userId, IReadOnlyDictionary<int, UserBrief> users)
     {
-        if (isAi) return ("AI 心理助手", "", "");
+        if (isAi) return ("小心光", "", "");
         if (!isAnonymous && userId is not null)
         {
             if (users.TryGetValue(userId.Value, out var u))

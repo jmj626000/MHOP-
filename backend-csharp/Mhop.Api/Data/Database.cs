@@ -45,7 +45,9 @@ public sealed class Database
         conn.Execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    user_no VARCHAR(16) UNIQUE,
     username VARCHAR(64) NOT NULL,
+    nickname VARCHAR(64),
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(20),
@@ -53,11 +55,13 @@ CREATE TABLE IF NOT EXISTS users (
     status VARCHAR(16) NOT NULL DEFAULT 'active',
     avatar VARCHAR(255) NOT NULL DEFAULT '',
     badge VARCHAR(64) NOT NULL DEFAULT '',
+    permissions TEXT NOT NULL DEFAULT '',
     created_at DATETIME
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username);
 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users (email);
 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone ON users (phone);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_users_user_no ON users (user_no);
 
 CREATE TABLE IF NOT EXISTS posts (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -182,6 +186,12 @@ CREATE INDEX IF NOT EXISTS ix_ai_logs_reply_id ON ai_logs (reply_id);
                 alters.Add("ALTER TABLE users ADD COLUMN badge VARCHAR(64) NOT NULL DEFAULT ''");
             if (!cols.Contains("phone"))
                 alters.Add("ALTER TABLE users ADD COLUMN phone VARCHAR(20)");
+            if (!cols.Contains("permissions"))
+                alters.Add("ALTER TABLE users ADD COLUMN permissions TEXT NOT NULL DEFAULT ''");
+            if (!cols.Contains("user_no"))
+                alters.Add("ALTER TABLE users ADD COLUMN user_no VARCHAR(16)");
+            if (!cols.Contains("nickname"))
+                alters.Add("ALTER TABLE users ADD COLUMN nickname VARCHAR(64)");
         }
         if (tables.Contains("ai_logs") && !Columns(conn, "ai_logs").Contains("reply_id"))
             alters.Add("ALTER TABLE ai_logs ADD COLUMN reply_id INTEGER");
@@ -196,6 +206,25 @@ CREATE INDEX IF NOT EXISTS ix_ai_logs_reply_id ON ai_logs (reply_id);
                 "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='users'").ToHashSet();
             if (!idx.Contains("ix_users_email"))
                 conn.Execute("CREATE UNIQUE INDEX ix_users_email ON users (email)");
+            if (!idx.Contains("ix_users_user_no"))
+                conn.Execute("CREATE UNIQUE INDEX ix_users_user_no ON users (user_no)");
+
+            // 存量回填：user_no = m-补零id；nickname 默认 = username
+            var users = conn.Query<(int Id, string Username, string? UserNo, string? Nickname)>(
+                "SELECT id, username, user_no, nickname FROM users ORDER BY id");
+            foreach (var (id, name, no, nick) in users)
+            {
+                var needsNo = string.IsNullOrEmpty(no);
+                var needsNick = string.IsNullOrEmpty(nick);
+                if (needsNo || needsNick)
+                {
+                    var userNo = needsNo ? $"m-{id:D5}" : no;
+                    var nickname = needsNick ? name : nick;
+                    conn.Execute(
+                        "UPDATE users SET user_no = @No, nickname = @Nick WHERE id = @Id",
+                        new { No = userNo, Nick = nickname, Id = id });
+                }
+            }
         }
     }
 

@@ -30,6 +30,7 @@ public sealed class EmailLoginIn
 public sealed class ProfileUpdateIn
 {
     [JsonPropertyName("username")] public string Username { get; set; } = "";
+    [JsonPropertyName("nickname")] public string? Nickname { get; set; }
     [JsonPropertyName("avatar")] public string Avatar { get; set; } = "";
 }
 
@@ -83,6 +84,13 @@ public sealed class BadgeBody
 public sealed class ActionBody
 {
     [JsonPropertyName("action")] public string? Action { get; set; }
+    /// <summary>提升为管理员时一并授予的模块权限码（仅 superadmin 调用时生效）。</summary>
+    [JsonPropertyName("permissions")] public List<string>? Permissions { get; set; }
+}
+
+public sealed class PermissionsBody
+{
+    [JsonPropertyName("permissions")] public List<string>? Permissions { get; set; }
 }
 
 public sealed class PasswordBody
@@ -108,25 +116,32 @@ public sealed class HeartbeatIn
 public sealed class UserOut
 {
     [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("user_no")] public string? UserNo { get; set; }
     [JsonPropertyName("username")] public string Username { get; set; } = "";
+    [JsonPropertyName("nickname")] public string? Nickname { get; set; }
     [JsonPropertyName("email")] public string? Email { get; set; }
     [JsonPropertyName("phone")] public string? Phone { get; set; }
     [JsonPropertyName("role")] public string Role { get; set; } = "user";
     [JsonPropertyName("status")] public string Status { get; set; } = "active";
     [JsonPropertyName("avatar")] public string Avatar { get; set; } = "";
     [JsonPropertyName("badge")] public string Badge { get; set; } = "";
+    /// <summary>有效权限码列表（superadmin 为全量），用于前端菜单/按钮/路由控制；后端接口另有强校验。</summary>
+    [JsonPropertyName("permissions")] public List<string> Permissions { get; set; } = [];
     [JsonPropertyName("created_at")] public DateTime CreatedAt { get; set; }
 
     public static UserOut From(Mhop.Data.User u) => new()
     {
         Id = u.Id,
+        UserNo = u.UserNo,
         Username = u.Username,
+        Nickname = u.Nickname ?? u.Username,
         Email = u.Email,
         Phone = u.Phone,
         Role = u.Role,
         Status = u.Status,
         Avatar = u.Avatar,
         Badge = u.Badge,
+        Permissions = Mhop.Security.AdminPermissions.Effective(u),
         CreatedAt = u.CreatedAt,
     };
 }

@@ -29,10 +29,18 @@ public sealed class SeedService
         var now = DateTime.Now;
         if (conn.QueryFirstOrDefault<int?>("SELECT id FROM users WHERE username = 'admin' LIMIT 1") is null)
         {
-            conn.Execute(
-                "INSERT INTO users (username, password_hash, role, status, avatar, badge, created_at) " +
-                "VALUES (@Username, @Hash, 'admin', 'active', '', '', @Now)",
-                new { Username = "admin", Hash = PasswordHasher.Hash("admin123"), Now = now });
+            // 种子账号为超级管理员：隐式拥有全部后台权限，且可分配其他管理员的权限
+            var id = conn.ExecuteScalar<long>(
+                "INSERT INTO users (username, password_hash, nickname, role, status, avatar, badge, permissions, created_at) " +
+                "VALUES (@Username, @Hash, @Nick, 'superadmin', 'active', '', '', '', @Now); SELECT last_insert_rowid();",
+                new { Username = "admin", Hash = PasswordHasher.Hash("admin123"), Nick = "心光管理员", Now = now });
+            conn.Execute("UPDATE users SET user_no = @No WHERE id = @Id",
+                new { No = $"m-{id:D5}", Id = (int)id });
+        }
+        else
+        {
+            // 老库升级：种子 admin 账号提升为超级管理员（幂等）；其他管理员保持 admin 且默认无模块权限，需超管重新授权
+            conn.Execute("UPDATE users SET role = 'superadmin' WHERE username = 'admin' AND role = 'admin'");
         }
 
         if (conn.ExecuteScalar<long>("SELECT COUNT(*) FROM posts") == 0)

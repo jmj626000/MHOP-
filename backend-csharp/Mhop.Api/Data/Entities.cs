@@ -5,7 +5,9 @@ namespace Mhop.Data;
 public sealed class User
 {
     public int Id { get; set; }
-    public string Username { get; set; } = "";
+    public string? UserNo { get; set; }      // m-00005，注册时自动生成
+    public string Username { get; set; } = "";   // 登录标识
+    public string? Nickname { get; set; }        // 展示昵称，可改，默认 = username
     public string PasswordHash { get; set; } = "";
     public string? Email { get; set; }
     public string? Phone { get; set; }
@@ -13,6 +15,8 @@ public sealed class User
     public string Status { get; set; } = "active";
     public string Avatar { get; set; } = "";
     public string Badge { get; set; } = "";
+    /// <summary>管理员模块权限码 JSON 数组字符串（如 ["dashboard","review"]）；仅 role=admin 时有意义，superadmin 隐式拥有全部。</summary>
+    public string Permissions { get; set; } = "";
     public DateTime CreatedAt { get; set; }
 }
 

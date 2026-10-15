@@ -51,9 +51,12 @@ public static class AuthEndpoints
 
         var now = DateTime.Now;
         var id = conn.ExecuteScalar<long>(
-            "INSERT INTO users (username, password_hash, role, status, avatar, badge, created_at) " +
-            "VALUES (@U, @P, 'user', 'active', '', '', @Now); SELECT last_insert_rowid();",
-            new { U = username, P = PasswordHasher.Hash(body.Password), Now = now });
+            "INSERT INTO users (username, password_hash, nickname, role, status, avatar, badge, created_at) " +
+            "VALUES (@U, @P, @N, 'user', 'active', '', '', @Now); SELECT last_insert_rowid();",
+            new { U = username, P = PasswordHasher.Hash(body.Password), N = username, Now = now });
+        // 自动生成编号 m-XXXXX
+        conn.Execute("UPDATE users SET user_no = @No WHERE id = @Id",
+            new { No = $"m-{id:D5}", Id = (int)id });
         var user = conn.QueryFirst<User>("SELECT * FROM users WHERE id = @Id", new { Id = (int)id });
         return Results.Json(Token(jwt, user));
     }
@@ -61,10 +64,13 @@ public static class AuthEndpoints
     private static IResult Login(LoginIn body, Database db, JwtTokens jwt)
     {
         using var conn = db.Open();
+        var key = body.Username.Trim();
+        // 兼容三种登录标识：username / email / user_no(m-XXXXX)
         var user = conn.QueryFirstOrDefault<User>(
-            "SELECT * FROM users WHERE username = @U", new { U = body.Username.Trim() });
+            "SELECT * FROM users WHERE username = @K OR email = @K OR user_no = @K",
+            new { K = key });
         if (user is null || !PasswordHasher.Verify(body.Password, user.PasswordHash))
-            return HttpResults.Error(401, "用户名或密码错误");
+            return HttpResults.Error(401, "登录名或密码错误");
         if (user.Status != "active")
             return HttpResults.Error(403, "账号已被停用");
         return Results.Json(Token(jwt, user));
@@ -146,15 +152,18 @@ public static class AuthEndpoints
                 return HttpResults.Error(500, "注册失败，请稍后重试");
 
             var id = conn.ExecuteScalar<long>(
-                "INSERT INTO users (username, password_hash, email, role, status, avatar, badge, created_at) " +
-                "VALUES (@U, @P, @E, 'user', 'active', '', '', @Now); SELECT last_insert_rowid();",
+                "INSERT INTO users (username, password_hash, nickname, email, role, status, avatar, badge, created_at) " +
+                "VALUES (@U, @P, @N, @E, 'user', 'active', '', '', @Now); SELECT last_insert_rowid();",
                 new
                 {
                     U = username,
                     P = PasswordHasher.Hash(RandomUrlSafeToken(24)),
+                    N = username,
                     E = addr,
                     Now = DateTime.Now,
                 });
+            conn.Execute("UPDATE users SET user_no = @No WHERE id = @Id",
+                new { No = $"m-{id:D5}", Id = (int)id });
             user = conn.QueryFirst<User>("SELECT * FROM users WHERE id = @Id", new { Id = (int)id });
             isNew = true;
         }
@@ -195,8 +204,14 @@ public static class AuthEndpoints
 
         var avatar = body.Avatar ?? "";
         if (avatar.Length > 255) avatar = avatar[..255];
-        conn.Execute("UPDATE users SET username = @U, avatar = @A WHERE id = @Id",
-            new { U = username, A = avatar, current.Id });
+
+        // nickname 可选更新
+        var nick = body.Nickname?.Trim();
+        if (nick is { Length: 0 } || nick != null && nick.Length > 64)
+            return HttpResults.Error(400, "昵称长度需为 1-64 字符");
+
+        conn.Execute("UPDATE users SET username = @U, avatar = @A, nickname = @N WHERE id = @Id",
+            new { U = username, A = avatar, N = nick, current.Id });
         var updated = conn.QueryFirst<User>("SELECT * FROM users WHERE id = @Id", new { current.Id });
         return Results.Json(UserOut.From(updated));
     }
@@ -229,6 +244,7 @@ public static class AuthEndpoints
         if (user is null) return HttpResults.Error(404, "用户不存在");
         var out_ = UserOut.From(user);
         out_.Phone = null; // 手机号仅本人与后台可见
+        out_.Permissions = []; // 权限列表不对外公开
         return Results.Json(out_);
     }
 }

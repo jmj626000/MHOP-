@@ -85,3 +85,14 @@ public sealed class AiLog
     public string Engine { get; set; } = "local";
     public DateTime CreatedAt { get; set; }
 }
+
+public sealed class Announcement
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Content { get; set; } = "";
+    public bool IsActive { get; set; } = true;
+    public int Sort { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}

@@ -214,3 +214,33 @@ public sealed class AssessmentOut
     [JsonPropertyName("saved_cloud")] public bool SavedCloud { get; set; }
     [JsonPropertyName("created_at")] public DateTime? CreatedAt { get; set; }
 }
+
+public sealed class AnnouncementIn
+{
+    [JsonPropertyName("title")] public string Title { get; set; } = "";
+    [JsonPropertyName("content")] public string Content { get; set; } = "";
+    [JsonPropertyName("is_active")] public bool IsActive { get; set; } = true;
+    [JsonPropertyName("sort")] public int Sort { get; set; }
+}
+
+public sealed class AnnouncementOut
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("title")] public string Title { get; set; } = "";
+    [JsonPropertyName("content")] public string Content { get; set; } = "";
+    [JsonPropertyName("is_active")] public bool IsActive { get; set; }
+    [JsonPropertyName("sort")] public int Sort { get; set; }
+    [JsonPropertyName("created_at")] public DateTime CreatedAt { get; set; }
+    [JsonPropertyName("updated_at")] public DateTime UpdatedAt { get; set; }
+
+    public static AnnouncementOut From(Mhop.Data.Announcement a) => new()
+    {
+        Id = a.Id,
+        Title = a.Title,
+        Content = a.Content,
+        IsActive = a.IsActive,
+        Sort = a.Sort,
+        CreatedAt = a.CreatedAt,
+        UpdatedAt = a.UpdatedAt,
+    };
+}

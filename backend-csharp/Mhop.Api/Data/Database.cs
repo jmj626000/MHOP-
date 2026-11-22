@@ -144,6 +144,18 @@ CREATE TABLE IF NOT EXISTS ai_logs (
 CREATE INDEX IF NOT EXISTS ix_ai_logs_user_id ON ai_logs (user_id);
 CREATE INDEX IF NOT EXISTS ix_ai_logs_session_id ON ai_logs (session_id);
 CREATE INDEX IF NOT EXISTS ix_ai_logs_reply_id ON ai_logs (reply_id);
+
+CREATE TABLE IF NOT EXISTS announcements (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+CREATE INDEX IF NOT EXISTS ix_announcements_active ON announcements (is_active);
+CREATE INDEX IF NOT EXISTS ix_announcements_sort ON announcements (sort);
 """);
     }
 

@@ -54,6 +54,7 @@ app.MapAuth();
 app.MapForum();
 app.MapAssessment();
 app.MapAdmin();
+app.MapAnnouncements();
 app.MapUpload();
 
 // ---- SPA 静态托管兜底（必须最后注册） ----

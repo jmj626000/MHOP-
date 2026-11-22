@@ -131,6 +131,7 @@ public static class ForumEndpoints
 
         var content = body.Content.Trim();
         if (content.Length == 0) return HttpResults.Error(400, "内容不能为空");
+        if (content.Length > 10000) return HttpResults.Error(400, "帖子内容不能超过 10000 字");
         if (!Boards.Slugs.Contains(body.Board)) return HttpResults.Error(400, "请选择板块");
 
         var crisis = Moderation.DetectCrisis(content);

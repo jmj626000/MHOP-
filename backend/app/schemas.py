@@ -55,7 +55,7 @@ class ProfileUpdateIn(BaseModel):
 
 
 class PostIn(BaseModel):
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=1, max_length=10000)
     is_anonymous: bool = True
     board: str = Field(min_length=1, max_length=16)
     images: list[str] = Field(default=[], max_length=9)

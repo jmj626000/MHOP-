@@ -11,7 +11,11 @@ namespace Mhop.Endpoints;
 
 public static class AuthEndpoints
 {
-    private static readonly Regex PhoneRe = new(@"^1[3-9]\d{9}$", RegexOptions.Compiled);
+    // 支持大陆 + 港澳台手机号（纯号码，不含国际区号）：
+    //   大陆 1[3-9]\d{9}（11位）
+    //   香港/澳门 [5-9]\d{7}（8位，澳门为 6 开头）
+    //   台湾 09\d{8}（10位）
+    private static readonly Regex PhoneRe = new(@"^(1[3-9]\d{9}|[5-9]\d{7}|09\d{8})$", RegexOptions.Compiled);
     private static readonly Regex UsernameEmailRe = new(@"[^a-zA-Z0-9_一-龥]", RegexOptions.Compiled);
 
     public static void MapAuth(this IEndpointRouteBuilder app)

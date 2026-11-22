@@ -45,7 +45,8 @@ class UserOut(BaseModel):
 
 
 class PhoneBindIn(BaseModel):
-    phone: str = Field(min_length=11, max_length=11, pattern=r"^1[3-9]\d{9}$")
+    # 支持大陆（11位）+ 港澳台（香港/澳门8位、台湾10位），不含国际区号
+    phone: str = Field(min_length=8, max_length=11, pattern=r"^(1[3-9]\d{9}|[5-9]\d{7}|09\d{8})$")
 
 
 class ProfileUpdateIn(BaseModel):
